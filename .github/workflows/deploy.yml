@@ -1,0 +1,51 @@
+name: Deploy to Hosting
+
+on:
+  push:
+    branches:
+      - main # Change this to your main branch (e.g., master, main)
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest # Use a fresh Ubuntu environment for each job
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4 # Action to check out your code from the repository
+        with:
+          fetch-depth: 0 # Fetch all history for all branches and tags.
+
+      - name: Set up Node.js (if your project requires it for building)
+        # This step is optional. Remove it if your website doesn't need Node.js for building.
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Specify the Node.js version your project uses
+
+      - name: Install dependencies (if your project requires it)
+        # This step is optional. Remove it if your website doesn't have dependencies.
+        run: npm install # Or 'yarn install' if you use Yarn
+
+      - name: Build project (if your project requires a build step)
+        # This step is optional. Customize this command based on your project's build process.
+        # For a simple static HTML site, you might not need this.
+        run: npm run build # Or 'yarn build', 'jekyll build', 'hugo', etc.
+
+      - name: Deploy to Bluehost via FTP/SFTP
+        # This action uses FTP/SFTP to deploy your files.
+        # It's recommended to use SFTP if your Bluehost account supports it for better security.
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: 22
+          protocol: sftp
+          local-dir: ./build/
+          remote-dir: /home4/multili2/public_html/website_66965144
+          state-name: .ftp-deploy-sync-state.json
+          exclude: |
+            **/.git*
+            **/.ftp-deploy-sync-state.json
+            **/node_modules/**
+            .env
+          log-level: verbose # Optional: Increase logging for debugging
