@@ -3,20 +3,19 @@ name: Deploy to Hosting
 on:
   push:
     branches:
-      - main # Change this to your main branch (e.g., master, main)
+      - main
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest # Use a fresh Ubuntu environment for each job
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4 # Action to check out your code from the repository
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetch all history for all branches and tags.
+          fetch-depth: 0
 
       - name: Set up Node.js (if your project requires it for building)
-        # This step is optional. Remove it if your website doesn't need Node.js for building.
         uses: actions/setup-node@v4
         with:
           node-version: '20' # Specify the Node.js version your project uses
@@ -34,8 +33,6 @@ jobs:
           cp -r api uploads metadata build/
 
       - name: Deploy to Bluehost via FTP/SFTP
-        # This action uses FTP/SFTP to deploy your files.
-        # It's recommended to use SFTP if your Bluehost account supports it for better security.
         uses: SamKirkland/FTP-Deploy-Action@v4.3.0
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -44,7 +41,6 @@ jobs:
           port: 22
           protocol: ftps
           local-dir: ./build/
-          remote-dir: /home4/multili2/public_html/website_66965144
           state-name: .ftp-deploy-sync-state.json
           exclude: |
             **/.git*
