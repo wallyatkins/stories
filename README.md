@@ -14,6 +14,7 @@ This project is a simple web application that allows users to record short video
    ```bash
    cd client && npm install
    ```
+   This will install `@vitejs/plugin-react` alongside React and Tailwind.
 2. **Run the client in development mode**:
    ```bash
    cd client
