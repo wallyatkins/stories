@@ -21,14 +21,17 @@ jobs:
         with:
           node-version: '20' # Specify the Node.js version your project uses
 
-      - name: Install dependencies (if your project requires it)
-        # This step is optional. Remove it if your website doesn't have dependencies.
-        run: npm install # Or 'yarn install' if you use Yarn
+      - name: Install dependencies
+        run: npm install
+        working-directory: client
 
-      - name: Build project (if your project requires a build step)
-        # This step is optional. Customize this command based on your project's build process.
-        # For a simple static HTML site, you might not need this.
-        run: npm run build # Or 'yarn build', 'jekyll build', 'hugo', etc.
+      - name: Build project
+        run: npm run build
+        working-directory: client
+
+      - name: Copy PHP backend
+        run: |
+          cp -r api uploads metadata build/
 
       - name: Deploy to Bluehost via FTP/SFTP
         # This action uses FTP/SFTP to deploy your files.
