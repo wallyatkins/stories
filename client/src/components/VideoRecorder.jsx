@@ -13,10 +13,15 @@ export default function VideoRecorder({ onRecorded }) {
     videoRef.current.srcObject = stream;
     videoRef.current.src = '';
     videoRef.current.muted = true;
-    mediaRecorderRef.current = new MediaRecorder(stream);
+    const preferredMime = MediaRecorder.isTypeSupported('video/mp4')
+      ? 'video/mp4'
+      : 'video/webm';
+    mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: preferredMime });
     mediaRecorderRef.current.ondataavailable = (e) => chunksRef.current.push(e.data);
     mediaRecorderRef.current.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+      const mimeType =
+        chunksRef.current[0]?.type || mediaRecorderRef.current.mimeType || preferredMime;
+      const blob = new Blob(chunksRef.current, { type: mimeType });
       chunksRef.current = [];
       const url = URL.createObjectURL(blob);
       setRecordedUrl(url);
@@ -46,7 +51,7 @@ export default function VideoRecorder({ onRecorded }) {
 
   return (
     <div>
-      <video ref={videoRef} autoPlay controls={!!recordedUrl} className="w-full mb-2" />
+      <video ref={videoRef} autoPlay playsInline controls={!!recordedUrl} className="w-full mb-2" />
       {recording ? (
         <button className="bg-red-500 text-white px-4 py-2 rounded" onClick={stopRecording}>Stop</button>
       ) : (
