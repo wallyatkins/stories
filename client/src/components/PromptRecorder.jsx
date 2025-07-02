@@ -4,7 +4,7 @@ import VideoRecorder from './VideoRecorder';
 export default function PromptRecorder({ onFinish }) {
   async function handleRecorded(blob) {
     const formData = new FormData();
-    formData.append('video', blob, 'prompt.webm');
+    formData.append('video', blob, 'prompt.mp4');
     const res = await fetch('api/upload_prompt.php', {
       method: 'POST',
       body: formData,

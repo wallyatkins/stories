@@ -6,7 +6,7 @@ export default function ResponseRecorder({ promptId }) {
 
   async function handleRecorded(blob) {
     const formData = new FormData();
-    formData.append('video', blob, 'response.webm');
+    formData.append('video', blob, 'response.mp4');
     await fetch(`api/upload_response.php?prompt=${promptId}`, {
       method: 'POST',
       body: formData,
