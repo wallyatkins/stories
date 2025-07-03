@@ -9,6 +9,11 @@ function require_https() {
 
 function start_session() {
     if (session_status() === PHP_SESSION_NONE) {
+        $savePath = __DIR__ . '/../metadata/sessions';
+        if (!is_dir($savePath)) {
+            mkdir($savePath, 0777, true);
+        }
+        session_save_path($savePath);
         session_start();
     }
 }

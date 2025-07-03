@@ -51,3 +51,11 @@ This simple setup demonstrates recording and playback of user-generated videos f
 An `.htaccess` file is included to enforce HTTPS and route requests for files in
 `uploads/` through `api/video.php`. Make sure `AllowOverride` is enabled in your
 Apache configuration so these rules take effect.
+
+## Server Configuration
+
+Server-side settings live in `config.php`. It reads environment variables and
+optionally a `.env` file. Copy `.env.example` to `.env` in the project root (or
+set `ENV_FILE` to another path) to configure settings without modifying the code
+base. Environment variables `MAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`,
+`SMTP_PASS` and `SMTP_SECURE` define the email sender and SMTP credentials.
