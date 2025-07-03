@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/auth.php';
+$config = require __DIR__ . '/../config.php';
 require_https();
 start_session();
 header('Content-Type: application/json');
@@ -24,6 +25,33 @@ if (!is_dir($tokenDir)) {
 }
 file_put_contents("$tokenDir/$token.json", json_encode(['email' => $email, 'ts' => time()]));
 $link = 'https://' . $_SERVER['HTTP_HOST'] . '/api/verify_login.php?token=' . $token;
-@mail($email, 'Your login link', "Click this link to log in: $link");
+// send email using config
+require_once '/usr/share/php/libphp-phpmailer/autoload.php';
+
+$subject = 'Your login link';
+$message = "Click this link to log in: $link";
+
+if (!empty($config['email']['smtp']['host'])) {
+    $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+    $mail->isSMTP();
+    $mail->Host = $config['email']['smtp']['host'];
+    $mail->Port = $config['email']['smtp']['port'];
+    if (!empty($config['email']['smtp']['username'])) {
+        $mail->SMTPAuth = true;
+        $mail->Username = $config['email']['smtp']['username'];
+        $mail->Password = $config['email']['smtp']['password'];
+    }
+    if (!empty($config['email']['smtp']['secure'])) {
+        $mail->SMTPSecure = $config['email']['smtp']['secure'];
+    }
+    $mail->setFrom($config['email']['from']);
+    $mail->addAddress($email);
+    $mail->Subject = $subject;
+    $mail->Body = $message;
+    $mail->send();
+} else {
+    $headers = 'From: ' . $config['email']['from'] . "\r\n";
+    @mail($email, $subject, $message, $headers);
+}
 
 echo json_encode(['sent' => true]);
