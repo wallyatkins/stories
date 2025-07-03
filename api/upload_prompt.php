@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/auth.php';
+require_https();
+require_login();
 header('Content-Type: application/json');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_FILES['video'])) {
     http_response_code(400);
