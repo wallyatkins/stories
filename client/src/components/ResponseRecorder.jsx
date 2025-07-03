@@ -32,7 +32,11 @@ export default function ResponseRecorder({ promptId }) {
       <ul>
         {responses.map((r, i) => (
           <li key={i} className="mb-2">
-            <video src={`uploads/${r.filename}`} controls className="w-full" />
+            <video
+              src={`api/video.php?file=${encodeURIComponent(r.filename)}`}
+              controls
+              className="w-full"
+            />
           </li>
         ))}
       </ul>

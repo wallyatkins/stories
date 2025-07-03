@@ -4,7 +4,7 @@ This project is a simple web application that allows users to record short video
 
 ## Structure
 
-- `api` – PHP endpoints for uploading and listing videos.
+- `api` – PHP endpoints for authentication and video uploads.
 - `client` – Vite React application with Tailwind for styling.
 - `uploads` – Directory where uploaded videos are stored.
 
@@ -23,10 +23,20 @@ This project is a simple web application that allows users to record short video
    The built site will be output to `build/` when you run `npm run build`.
 3. **Serve with PHP** (after building):
    ```bash
-   php -S localhost:8000 -t build
+   php -S localhost:8000
    ```
 
+   The PHP built-in server should be started from the project root so the `api/`
+   endpoints are available.
+
 Uploaded videos are stored in the `uploads/` directory alongside the PHP scripts.
+Apache users should enable `.htaccess` so that HTTP requests are redirected to HTTPS and video files are served through `api/video.php` for authenticated sessions.
+
+## Login Flow
+
+1. Users enter their email address in the login form.
+2. A login link is emailed to them using the PHP backend.
+3. Following the link establishes a session which allows access to the recorders.
 
 ## Recording Flow
 
@@ -35,3 +45,9 @@ Uploaded videos are stored in the `uploads/` directory alongside the PHP scripts
 3. Responses are listed below the recorder.
 
 This simple setup demonstrates recording and playback of user-generated videos for storytelling.
+
+## Apache Configuration
+
+An `.htaccess` file is included to enforce HTTPS and route requests for files in
+`uploads/` through `api/video.php`. Make sure `AllowOverride` is enabled in your
+Apache configuration so these rules take effect.

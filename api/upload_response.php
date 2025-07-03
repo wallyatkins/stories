@@ -1,6 +1,9 @@
 <?php
+require_once __DIR__ . '/auth.php';
+require_https();
+require_login();
 header('Content-Type: application/json');
-$prompt = $_GET['prompt'] ?? '';
+$prompt = basename($_GET['prompt'] ?? '');
 if ($prompt === '' || $_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_FILES['video'])) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid request']);
