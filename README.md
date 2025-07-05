@@ -59,3 +59,26 @@ optionally a `.env` file. Copy `.env.example` to `.env` in the project root (or
 set `ENV_FILE` to another path) to configure settings without modifying the code
 base. Environment variables `MAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`,
 `SMTP_PASS` and `SMTP_SECURE` define the email sender and SMTP credentials.
+
+## PHP Backend Setup
+
+The PHP backend uses [Composer](https://getcomposer.org/) to manage dependencies. To install the required libraries, run the following commands from the project root:
+
+1.  **Download Composer:**
+    ```bash
+    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    ```
+2.  **Install Composer:**
+    ```bash
+    php composer-setup.php
+    ```
+3.  **Remove the installer:**
+    ```bash
+    php -r "unlink('composer-setup.php');"
+    ```
+4.  **Install dependencies:**
+    ```bash
+    php composer.phar install
+    ```
+
+This will create a `vendor` directory with the necessary libraries. Remember to run `php composer.phar install` on your hosting environment to ensure all dependencies are correctly installed.
