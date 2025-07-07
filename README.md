@@ -35,8 +35,12 @@ Apache users should enable `.htaccess` so that HTTP requests are redirected to H
 ## Login Flow
 
 1. Users enter their email address in the login form.
-2. A login link is emailed to them using the PHP backend.
-3. Following the link establishes a session which allows access to the recorders.
+2. The backend checks the address against the whitelist stored in PostgreSQL.
+   If it isn't found the request is rejected.
+3. When recognised, the server emails a login link and stores any associated
+   friend accounts with the token.
+4. Following the link establishes a session which includes the user's friend
+   list so it can be queried from the client.
 
 ## Recording Flow
 
@@ -50,7 +54,9 @@ This simple setup demonstrates recording and playback of user-generated videos f
 
 An `.htaccess` file is included to enforce HTTPS and route requests for files in
 `uploads/` through `api/video.php`. Make sure `AllowOverride` is enabled in your
-Apache configuration so these rules take effect.
+Apache configuration so these rules take effect. The deployment workflow copies
+both `.htaccess` and `config.php` to the host so these rules and settings are
+applied automatically with each update.
 
 ## Server Configuration
 
@@ -59,6 +65,31 @@ optionally a `.env` file. Copy `.env.example` to `.env` in the project root (or
 set `ENV_FILE` to another path) to configure settings without modifying the code
 base. Environment variables `MAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`,
 `SMTP_PASS` and `SMTP_SECURE` define the email sender and SMTP credentials.
+`DB_DSN`, `DB_USER` and `DB_PASS` configure the PostgreSQL connection used for
+whitelisted accounts and friend relationships.
+
+### PostgreSQL tables
+
+Two tables are expected:
+
+```
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL
+);
+
+CREATE TABLE friends (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  friend_user_id INTEGER NOT NULL REFERENCES users(id)
+);
+```
+
+Each row in `friends` defines a relationship from `user_id` to
+`friend_user_id`. Insert rows in both directions for mutual friendships.
+
+The schema above is stored in `database/init.sql`. Future changes will live in
+numbered files under `database/migrations/`. Apply new migrations in order when
+deploying updates so the database stays in sync with the application.
 
 ## PHP Backend Setup
 

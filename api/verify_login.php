@@ -8,6 +8,7 @@ if ($token !== '' && file_exists($tokenFile)) {
     $data = json_decode(file_get_contents($tokenFile), true);
     unlink($tokenFile);
     $_SESSION['user'] = $data['email'];
+    $_SESSION['friends'] = $data['friends'] ?? [];
     header('Location: /');
     exit;
 }

@@ -31,6 +31,7 @@ jobs:
       - name: Copy PHP backend
         run: |
           cp -r api uploads metadata build/
+          cp config.php .htaccess build/
 
       - name: Deploy to Bluehost via FTP/SFTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.0
