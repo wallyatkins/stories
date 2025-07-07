@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/auth.php';
 $config = require __DIR__ . '/../config.php';
+require_once __DIR__ . '/db.php';
 require_https();
 start_session();
 header('Content-Type: application/json');
@@ -18,12 +19,29 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
+// Ensure the email is whitelisted
+$pdo = db();
+$stmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
+$stmt->execute([$email]);
+$userId = $stmt->fetchColumn();
+if (!$userId) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Email not recognized']);
+    exit;
+}
+
+// Load friend email addresses for the login request
+$friendStmt = $pdo->prepare('SELECT u2.email FROM friends f JOIN users u2 ON f.friend_user_id = u2.id WHERE f.user_id = ?');
+$friendStmt->execute([$userId]);
+$friends = $friendStmt->fetchAll(PDO::FETCH_COLUMN);
+
 $token = bin2hex(random_bytes(16));
 $tokenDir = __DIR__ . '/../metadata/tokens';
 if (!is_dir($tokenDir)) {
     mkdir($tokenDir, 0777, true);
 }
-file_put_contents("$tokenDir/$token.json", json_encode(['email' => $email, 'ts' => time()]));
+$tokenData = ['email' => $email, 'ts' => time(), 'friends' => $friends];
+file_put_contents("$tokenDir/$token.json", json_encode($tokenData));
 $link = 'https://' . $_SERVER['HTTP_HOST'] . '/api/verify_login.php?token=' . $token;
 // send email using config
 require_once __DIR__ . '/../vendor/autoload.php';

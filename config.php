@@ -26,5 +26,14 @@ return [
             'password' => getenv('SMTP_PASS') ?: '',
             'secure' => getenv('SMTP_SECURE') ?: 'tls'
         ]
+    ],
+    'db' => [
+        'dsn' => getenv('DB_DSN') ?: '',
+        'user' => getenv('DB_USER') ?: '',
+        'pass' => getenv('DB_PASS') ?: '',
+        // Options can be overridden via DB_OPTIONS JSON
+        'options' => getenv('DB_OPTIONS') ? json_decode(getenv('DB_OPTIONS'), true) : [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+        ]
     ]
 ];
