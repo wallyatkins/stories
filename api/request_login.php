@@ -30,17 +30,13 @@ if (!$userId) {
     exit;
 }
 
-// Load friend email addresses for the login request
-$friendStmt = $pdo->prepare('SELECT u2.email FROM friends f JOIN users u2 ON f.friend_user_id = u2.id WHERE f.user_id = ?');
-$friendStmt->execute([$userId]);
-$friends = $friendStmt->fetchAll(PDO::FETCH_COLUMN);
 
 $token = bin2hex(random_bytes(16));
 $tokenDir = __DIR__ . '/../metadata/tokens';
 if (!is_dir($tokenDir)) {
     mkdir($tokenDir, 0777, true);
 }
-$tokenData = ['email' => $email, 'ts' => time(), 'friends' => $friends];
+$tokenData = ['email' => $email, 'ts' => time()];
 file_put_contents("$tokenDir/$token.json", json_encode($tokenData));
 $link = 'https://' . $_SERVER['HTTP_HOST'] . '/api/verify_login.php?token=' . $token;
 // send email using config

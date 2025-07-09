@@ -4,6 +4,7 @@ import ResponseRecorder from './components/ResponseRecorder';
 import LoginForm from './components/LoginForm';
 import FriendList from './components/FriendList';
 import UserMenu from './components/UserMenu';
+import Profile from './components/Profile';
 
 export default function App() {
   const [promptId, setPromptId] = useState('');
@@ -11,6 +12,7 @@ export default function App() {
   const [authenticated, setAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     fetch('api/check_login.php')
@@ -42,12 +44,19 @@ export default function App() {
     });
   }
 
+  function handleProfileUpdated(u) {
+    setUser(u);
+  }
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Video Stories</h1>
-        <UserMenu user={user} onLogout={handleLogout} />
+        <UserMenu user={user} onLogout={handleLogout} onProfile={() => setShowProfile(true)} />
       </div>
+      {showProfile && (
+        <Profile user={user} onUpdated={handleProfileUpdated} onClose={() => setShowProfile(false)} />
+      )}
       <FriendList />
       {recordingPrompt ? (
         <PromptRecorder onFinish={(id) => { setPromptId(id); setRecordingPrompt(false); }} />
