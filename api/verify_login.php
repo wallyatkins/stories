@@ -2,6 +2,7 @@
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/db.php';
 require_https();
+$prompt = basename($_GET['prompt'] ?? '');
 start_session();
 $token = $_GET['token'] ?? '';
 $tokenFile = __DIR__ . '/../metadata/tokens/' . basename($token) . '.json';
@@ -26,7 +27,11 @@ if ($token !== '' && file_exists($tokenFile)) {
 
     $_SESSION['user'] = $user;
     $_SESSION['friends'] = $friends;
-    header('Location: /');
+    $redirect = '/';
+    if ($prompt !== '') {
+        $redirect .= '?prompt=' . rawurlencode($prompt);
+    }
+    header('Location: ' . $redirect);
     exit;
 }
 header('Content-Type: text/plain');
