@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-export default function FriendList() {
+export default function FriendList({ onPrompt }) {
   const [friends, setFriends] = useState([]);
 
   useEffect(() => {
@@ -28,6 +28,13 @@ export default function FriendList() {
               <div className="font-semibold">{f.username || f.email}</div>
               <div className="text-sm text-gray-600">{f.email}</div>
             </div>
+            <button
+              className="ml-auto text-xl"
+              onClick={() => onPrompt && onPrompt(f)}
+              title="Send prompt"
+            >
+              💬
+            </button>
           </li>
         ))}
       </ul>

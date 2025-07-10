@@ -1,7 +1,7 @@
 import React from 'react';
 import VideoRecorder from './VideoRecorder';
 
-export default function PromptRecorder({ onFinish }) {
+export default function PromptRecorder({ friend, onFinish }) {
   async function handleRecorded(blob) {
     const formData = new FormData();
     formData.append('video', blob, 'prompt.mp4');
@@ -15,7 +15,9 @@ export default function PromptRecorder({ onFinish }) {
 
   return (
     <div>
-      <h2 className="text-xl mb-2">Record a Prompt</h2>
+      <h2 className="text-xl mb-2">
+        Record a Prompt for {friend.username || friend.email}
+      </h2>
       <VideoRecorder onRecorded={handleRecorded} />
     </div>
   );

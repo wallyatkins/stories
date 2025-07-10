@@ -8,7 +8,7 @@ import Profile from './components/Profile';
 
 export default function App() {
   const [promptId, setPromptId] = useState('');
-  const [recordingPrompt, setRecordingPrompt] = useState(false);
+  const [targetFriend, setTargetFriend] = useState(null);
   const [authenticated, setAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -57,11 +57,15 @@ export default function App() {
       {showProfile && (
         <Profile user={user} onUpdated={handleProfileUpdated} onClose={() => setShowProfile(false)} />
       )}
-      <FriendList />
-      {recordingPrompt ? (
-        <PromptRecorder onFinish={(id) => { setPromptId(id); setRecordingPrompt(false); }} />
-      ) : (
-        <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={() => setRecordingPrompt(true)}>Record Prompt</button>
+      <FriendList onPrompt={(f) => setTargetFriend(f)} />
+      {targetFriend && (
+        <PromptRecorder
+          friend={targetFriend}
+          onFinish={(id) => {
+            setPromptId(id);
+            setTargetFriend(null);
+          }}
+        />
       )}
       {promptId && (
         <div className="mt-6">
