@@ -27,6 +27,11 @@ export default function ResponseRecorder({ promptId }) {
   return (
     <div>
       <h2 className="text-xl mb-2">Respond to Prompt</h2>
+      <video
+        src={`api/video.php?file=${encodeURIComponent(promptId)}`}
+        controls
+        className="w-full mb-4"
+      />
       <VideoRecorder onRecorded={handleRecorded} />
       <h3 className="text-lg mt-4 mb-2">Responses</h3>
       <ul>

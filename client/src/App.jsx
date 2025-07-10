@@ -7,7 +7,9 @@ import UserMenu from './components/UserMenu';
 import Profile from './components/Profile';
 
 export default function App() {
-  const [promptId, setPromptId] = useState('');
+  const [promptId, setPromptId] = useState(() => {
+    return new URLSearchParams(window.location.search).get('prompt') || '';
+  });
   const [targetFriend, setTargetFriend] = useState(null);
   const [authenticated, setAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
@@ -63,6 +65,9 @@ export default function App() {
           friend={targetFriend}
           onFinish={(id) => {
             setPromptId(id);
+            const url = new URL(window.location);
+            url.searchParams.set('prompt', id);
+            window.history.replaceState(null, '', url);
             setTargetFriend(null);
           }}
         />
