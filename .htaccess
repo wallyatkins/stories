@@ -1,8 +1,25 @@
 RewriteEngine On
+
+# Redirect to HTTPS
 RewriteCond %{HTTPS} off
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-# Serve uploaded files via secure PHP script
+# Hide PHP extension for API endpoints
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/([\w-]+)/?$ api/$1.php [QSA,L]
+
+# Serve uploaded files through secure PHP script
 RewriteRule ^uploads/(.*)$ api/video.php?file=$1 [QSA,L]
+
+# Serve built React assets from the build directory
+RewriteRule ^(assets/.*|favicon.ico|manifest.json)$ build/$1 [L]
+
+# React SPA fallback
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteCond %{REQUEST_URI} !^/uploads/
+RewriteRule ^ build/index.html [L]
 
 Options -Indexes
