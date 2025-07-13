@@ -43,7 +43,7 @@ $link = 'https://' . $_SERVER['HTTP_HOST'] . '/api/verify_login.php?token=' . $t
 require_once __DIR__ . '/../vendor/autoload.php';
 
 $subject = 'Your login link';
-$message = "Click this link to log in: $link";
+$message = "Click this link to log in: $link\nThis link will expire in 15 minutes.";
 
 if (!empty($config['email']['smtp']['host'])) {
     $mail = new PHPMailer\PHPMailer\PHPMailer(true);
