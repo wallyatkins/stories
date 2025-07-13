@@ -38,9 +38,10 @@ Apache users should enable `.htaccess` so that HTTP requests are redirected to H
 2. The backend checks the address against the whitelist stored in PostgreSQL.
    If it isn't found the request is rejected.
 3. When recognised, the server emails a login link and stores any associated
-   friend accounts with the token.
+   friend accounts with the token. The link is only valid for 15 minutes.
 4. Following the link establishes a session which includes the user's friend
-   list so it can be queried from the client.
+   list so it can be queried from the client. If the link has expired, the
+   user is shown a form to request a new one.
 
 ## Recording Flow
 
