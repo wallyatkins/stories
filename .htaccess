@@ -12,6 +12,10 @@ RewriteRule ^api/([\w-]+)/?$ api/$1.php [QSA,L]
 # Serve uploaded files through secure PHP script
 RewriteRule ^uploads/(.*)$ api/video.php?file=$1 [QSA,L]
 
+# Friendly error pages
+ErrorDocument 404 /errors/404.html
+ErrorDocument 500 /errors/500.html
+
 # Serve built React assets from the build directory
 RewriteRule ^(assets/.*|favicon.ico|manifest.json)$ build/$1 [L]
 
