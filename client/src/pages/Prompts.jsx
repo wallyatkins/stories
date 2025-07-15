@@ -7,7 +7,7 @@ export default function Prompts() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('api/check_login.php')
+    fetch('api/check_login')
       .then(res => res.json())
       .then(data => {
         setAuthenticated(data.authenticated);

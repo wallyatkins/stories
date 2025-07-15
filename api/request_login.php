@@ -38,7 +38,7 @@ if (!is_dir($tokenDir)) {
 }
 $tokenData = ['email' => $email, 'ts' => time()];
 file_put_contents("$tokenDir/$token.json", json_encode($tokenData));
-$link = 'https://' . $_SERVER['HTTP_HOST'] . '/api/verify_login.php?token=' . $token;
+$link = 'https://' . $_SERVER['HTTP_HOST'] . '/verify-login/' . $token;
 // send email using config
 require_once __DIR__ . '/../vendor/autoload.php';
 

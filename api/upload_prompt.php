@@ -32,7 +32,7 @@ if ($friendId > 0) {
         }
         $tokenData = ['email' => $friendEmail, 'ts' => time()];
         file_put_contents("$tokenDir/$token.json", json_encode($tokenData));
-        $link = 'https://' . $_SERVER['HTTP_HOST'] . '/api/verify_login.php?token=' . $token . '&prompt=' . rawurlencode($filename);
+        $link = 'https://' . $_SERVER['HTTP_HOST'] . '/verify-login/' . $token . '?prompt=' . rawurlencode($filename);
 
         require_once __DIR__ . '/../vendor/autoload.php';
         $subject = 'New video prompt';

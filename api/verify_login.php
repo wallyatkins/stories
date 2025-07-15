@@ -16,7 +16,7 @@ if ($token !== '' && file_exists($tokenFile)) {
         header('Content-Type: text/html; charset=UTF-8');
         echo '<!DOCTYPE html><html><body>';
         echo '<p>Login link expired. Request a new link below.</p>';
-        echo '<form method="post" action="/api/request_login.php">';
+        echo '<form method="post" action="/api/request_login">';
         echo '<input type="email" name="email" required placeholder="Email" />';
         echo '<button type="submit">Send Login Link</button>';
         echo '</form></body></html>';
