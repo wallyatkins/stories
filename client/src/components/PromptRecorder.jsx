@@ -3,7 +3,7 @@ import VideoRecorder from './VideoRecorder';
 
 export default function PromptRecorder({ friend, onFinish }) {
   const [uploading, setUploading] = useState(false);
-  async function handleRecorded(blob) {
+  async function handleRecorded(blob /*, url */) {
     setUploading(true);
     const formData = new FormData();
     formData.append('video', blob, 'prompt.mp4');

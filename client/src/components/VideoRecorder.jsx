@@ -30,7 +30,10 @@ export default function VideoRecorder({ onRecorded }) {
 
   async function startRecording() {
     if (!streamRef.current) return;
-    setRecordedUrl(null);
+    if (recordedUrl) {
+      URL.revokeObjectURL(recordedUrl);
+      setRecordedUrl(null);
+    }
     const preferredMime = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
     mediaRecorderRef.current = new MediaRecorder(streamRef.current, { mimeType: preferredMime });
     mediaRecorderRef.current.ondataavailable = (e) => chunksRef.current.push(e.data);
@@ -43,7 +46,7 @@ export default function VideoRecorder({ onRecorded }) {
       videoRef.current.srcObject = null;
       videoRef.current.src = url;
       videoRef.current.muted = false;
-      onRecorded(blob);
+      if (onRecorded) onRecorded(blob, url);
     };
     mediaRecorderRef.current.start();
     setRecording(true);
@@ -67,11 +70,17 @@ export default function VideoRecorder({ onRecorded }) {
       />
       {!recordedUrl && (
         <button
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-yellow-400 rounded-full w-16 h-16"
-          onPointerDown={startRecording}
-          onPointerUp={stopRecording}
-          onPointerLeave={stopRecording}
-        />
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center justify-center"
+          onClick={recording ? stopRecording : startRecording}
+        >
+          {recording ? (
+            <span className="block rounded-full border-4 border-red-600 w-16 h-16 flex items-center justify-center">
+              <span className="bg-red-600 w-6 h-6"></span>
+            </span>
+          ) : (
+            <span className="block rounded-full bg-red-600 w-16 h-16"></span>
+          )}
+        </button>
       )}
     </div>
   );

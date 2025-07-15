@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-export default function FriendList({ onPrompt }) {
+export default function FriendList() {
+  const navigate = useNavigate();
   const [friends, setFriends] = useState([]);
 
   useEffect(() => {
@@ -30,7 +32,7 @@ export default function FriendList({ onPrompt }) {
             </div>
             <button
               className="ml-auto text-xl"
-              onClick={() => onPrompt && onPrompt(f)}
+              onClick={() => navigate(`/record/${f.id}`, { state: { friend: f } })}
               title="Send prompt"
             >
               💬
