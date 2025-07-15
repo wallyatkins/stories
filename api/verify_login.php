@@ -39,7 +39,7 @@ if ($token !== '' && file_exists($tokenFile)) {
 
     $_SESSION['user'] = $user;
     $_SESSION['friends'] = $friends;
-    $redirect = '/';
+    $redirect = '/prompts';
     if ($prompt !== '') {
         $redirect .= '?prompt=' . rawurlencode($prompt);
     }
