@@ -6,7 +6,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('api/check_login.php')
+    fetch('api/check_login')
       .then(res => res.json())
       .then(data => {
         setUser(data.user || null);

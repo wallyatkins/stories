@@ -30,7 +30,7 @@ This project is a simple web application that allows users to record short video
    endpoints are available.
 
 Uploaded videos are stored in the `uploads/` directory alongside the PHP scripts.
-Apache users should enable `.htaccess` so that HTTP requests are redirected to HTTPS and video files are served through `api/video.php` for authenticated sessions.
+Apache users should enable `.htaccess` so that HTTP requests are redirected to HTTPS and video files are served through `api/video` for authenticated sessions.
 
 ## Login Flow
 
@@ -54,7 +54,7 @@ This simple setup demonstrates recording and playback of user-generated videos f
 ## Apache Configuration
 
 An `.htaccess` file is included to enforce HTTPS and route requests for files in
-`uploads/` through `api/video.php`. Make sure `AllowOverride` is enabled in your
+`uploads/` through `api/video`. Make sure `AllowOverride` is enabled in your
 Apache configuration so these rules take effect. The deployment workflow copies
 both `.htaccess` and `config.php` to the host so these rules and settings are
 applied automatically with each update.

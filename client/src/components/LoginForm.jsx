@@ -9,7 +9,7 @@ export default function LoginForm() {
     e.preventDefault();
     const formData = new FormData();
     formData.append('email', email);
-    const res = await fetch('api/request_login.php', {
+    const res = await fetch('api/request_login', {
       method: 'POST',
       body: formData,
     });

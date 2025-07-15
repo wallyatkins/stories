@@ -9,6 +9,9 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^api/([\w-]+)/?$ api/$1.php [QSA,L]
 
+# Direct token link for email login
+RewriteRule ^verify-login/([A-Za-z0-9]+)/?$ api/verify_login.php?token=$1 [QSA,L]
+
 # Serve uploaded files through secure PHP script
 RewriteRule ^uploads/(.*)$ api/video.php?file=$1 [QSA,L]
 

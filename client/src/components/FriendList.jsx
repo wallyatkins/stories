@@ -4,7 +4,7 @@ export default function FriendList({ onPrompt }) {
   const [friends, setFriends] = useState([]);
 
   useEffect(() => {
-    fetch('api/list_friends.php')
+    fetch('api/list_friends')
       .then((res) => res.json())
       .then((data) => setFriends(data));
   }, []);

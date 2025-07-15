@@ -7,7 +7,7 @@ export default function ResponseRecorder({ promptId }) {
   async function handleRecorded(blob) {
     const formData = new FormData();
     formData.append('video', blob, 'response.mp4');
-    await fetch(`api/upload_response.php?prompt=${promptId}`, {
+    await fetch(`api/upload_response?prompt=${promptId}`, {
       method: 'POST',
       body: formData,
     });
@@ -15,7 +15,7 @@ export default function ResponseRecorder({ promptId }) {
   }
 
   async function loadResponses() {
-    const res = await fetch(`api/list_responses.php?prompt=${promptId}`);
+    const res = await fetch(`api/list_responses?prompt=${promptId}`);
     const data = await res.json();
     setResponses(data);
   }
@@ -28,7 +28,7 @@ export default function ResponseRecorder({ promptId }) {
     <div>
       <h2 className="text-xl mb-2">Respond to Prompt</h2>
       <video
-        src={`api/video.php?file=${encodeURIComponent(promptId)}`}
+        src={`api/video?file=${encodeURIComponent(promptId)}`}
         controls
         className="w-full mb-4"
       />
@@ -38,7 +38,7 @@ export default function ResponseRecorder({ promptId }) {
         {responses.map((r, i) => (
           <li key={i} className="mb-2">
             <video
-              src={`api/video.php?file=${encodeURIComponent(r.filename)}`}
+              src={`api/video?file=${encodeURIComponent(r.filename)}`}
               controls
               className="w-full"
             />
