@@ -4,7 +4,7 @@ import VideoRecorder from './VideoRecorder';
 export default function ResponseRecorder({ promptId }) {
   const [responses, setResponses] = useState([]);
 
-  async function handleRecorded(blob) {
+  async function handleRecorded(blob /*, url */) {
     const formData = new FormData();
     formData.append('video', blob, 'response.mp4');
     await fetch(`api/upload_response?prompt=${promptId}`, {

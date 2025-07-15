@@ -6,11 +6,12 @@ import Logout from './pages/Logout';
 import Prompts from './pages/Prompts';
 import Stories from './pages/Stories';
 import ProfilePage from './pages/ProfilePage';
+import RecordPrompt from './pages/RecordPrompt';
 import Nav from './components/Nav';
 
 function AppRoutes() {
   const location = useLocation();
-  const showNav = location.pathname !== '/';
+  const showNav = location.pathname !== '/' && !location.pathname.startsWith('/record');
   return (
     <>
       {showNav && <Nav />}
@@ -21,6 +22,7 @@ function AppRoutes() {
         <Route path="/prompts" element={<Prompts />} />
         <Route path="/stories" element={<Stories />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/record/:friendId" element={<RecordPrompt />} />
       </Routes>
     </>
   );
