@@ -4,9 +4,11 @@ export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setLoading(true);
     const formData = new FormData();
     formData.append('email', email);
     const res = await fetch('api/request_login', {
@@ -20,6 +22,7 @@ export default function LoginForm() {
     } else {
       setError(data.error || 'Request failed');
     }
+    setLoading(false);
   }
 
   if (sent) {
@@ -36,9 +39,14 @@ export default function LoginForm() {
           required
           className="border px-2 py-1"
           placeholder="Email"
+          disabled={loading}
         />
-        <button className="bg-blue-500 text-white px-4 py-1 rounded" type="submit">
-          Send Login Link
+        <button
+          className="bg-blue-500 text-white px-4 py-1 rounded"
+          type="submit"
+          disabled={loading}
+        >
+          {loading ? 'Sending...' : 'Send Login Link'}
         </button>
       </form>
       {error && <p className="text-red-600 mt-2">{error}</p>}

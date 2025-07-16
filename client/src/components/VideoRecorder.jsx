@@ -66,7 +66,7 @@ export default function VideoRecorder({ onRecorded }) {
         autoPlay
         playsInline
         controls={!!recordedUrl}
-        className="w-full mb-2"
+        className={`w-full mb-2 ${!recordedUrl ? 'transform -scale-x-100' : ''}`}
       />
       {!recordedUrl && (
         <button
