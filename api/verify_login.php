@@ -1,9 +1,13 @@
 <?php
+require_once __DIR__ . '/../api/logger.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/db.php';
 require_https();
 $prompt = basename($_GET['prompt'] ?? '');
 start_session();
+
+$logger->info('Login verification attempt');
+
 $token = $_GET['token'] ?? '';
 $tokenFile = __DIR__ . '/../metadata/tokens/' . basename($token) . '.json';
 if ($token !== '' && file_exists($tokenFile)) {
@@ -13,6 +17,7 @@ if ($token !== '' && file_exists($tokenFile)) {
     $expired = (time() - $created) > 900; // 15 minutes
     unlink($tokenFile);
     if ($expired) {
+        $logger->warning('Login verification failed: Expired token', ['email' => $email]);
         header('Content-Type: text/html; charset=UTF-8');
         echo '<!DOCTYPE html><html><body>';
         echo '<p>Login link expired. Request a new link below.</p>';
@@ -28,6 +33,7 @@ if ($token !== '' && file_exists($tokenFile)) {
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$user) {
+        $logger->warning('Login verification failed: User not found in database', ['email' => $email]);
         http_response_code(400);
         echo 'Invalid user';
         exit;
@@ -39,6 +45,7 @@ if ($token !== '' && file_exists($tokenFile)) {
 
     $_SESSION['user'] = $user;
     $_SESSION['friends'] = $friends;
+    $logger->info('Login successful', ['user_id' => $user['id'], 'email' => $user['email']]);
     $redirect = '/prompts';
     if ($prompt !== '') {
         $redirect .= '?prompt=' . rawurlencode($prompt);
@@ -46,6 +53,8 @@ if ($token !== '' && file_exists($tokenFile)) {
     header('Location: ' . $redirect);
     exit;
 }
+
+$logger->warning('Login verification failed: Invalid or missing token');
 header('Content-Type: text/plain');
 http_response_code(400);
 echo 'Invalid or expired token';

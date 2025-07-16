@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../api/logger.php';
 require_once __DIR__ . '/auth.php';
 $config = require __DIR__ . '/../config.php';
 require_once __DIR__ . '/db.php';
@@ -6,8 +7,11 @@ require_https();
 start_session();
 header('Content-Type: application/json');
 
+$logger->info('Login request received');
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
+    $logger->warning('Login request rejected: Not a POST request');
     echo json_encode(['error' => 'POST required']);
     exit;
 }
@@ -15,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $email = $_POST['email'] ?? '';
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     http_response_code(400);
+    $logger->warning('Login request failed: Invalid email provided', ['email' => $email]);
     echo json_encode(['error' => 'Invalid email']);
     exit;
 }
@@ -26,6 +31,7 @@ $stmt->execute([$email]);
 $userId = $stmt->fetchColumn();
 if (!$userId) {
     http_response_code(400);
+    $logger->warning('Login request failed: Unrecognized email', ['email' => $email]);
     echo json_encode(['error' => 'Email not recognized']);
     exit;
 }
@@ -45,27 +51,38 @@ require_once __DIR__ . '/../vendor/autoload.php';
 $subject = 'Your login link';
 $message = "Click this link to log in: $link\nThis link will expire in 15 minutes.";
 
-if (!empty($config['email']['smtp']['host'])) {
-    $mail = new PHPMailer\PHPMailer\PHPMailer(true);
-    $mail->isSMTP();
-    $mail->Host = $config['email']['smtp']['host'];
-    $mail->Port = $config['email']['smtp']['port'];
-    if (!empty($config['email']['smtp']['username'])) {
-        $mail->SMTPAuth = true;
-        $mail->Username = $config['email']['smtp']['username'];
-        $mail->Password = $config['email']['smtp']['password'];
+try {
+    if (!empty($config['email']['smtp']['host'])) {
+        $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+        $mail->isSMTP();
+        $mail->Host = $config['email']['smtp']['host'];
+        $mail->Port = $config['email']['smtp']['port'];
+        if (!empty($config['email']['smtp']['username'])) {
+            $mail->SMTPAuth = true;
+            $mail->Username = $config['email']['smtp']['username'];
+            $mail->Password = $config['email']['smtp']['password'];
+        }
+        if (!empty($config['email']['smtp']['secure'])) {
+            $mail->SMTPSecure = $config['email']['smtp']['secure'];
+        }
+        $mail->setFrom($config['email']['from']);
+        $mail->addAddress($email);
+        $mail->Subject = $subject;
+        $mail->Body = $message;
+        $mail->send();
+    } else {
+        $headers = 'From: ' . $config['email']['from'] . "\r\n";
+        if (!@mail($email, $subject, $message, $headers)) {
+            throw new Exception('mail() function failed');
+        }
     }
-    if (!empty($config['email']['smtp']['secure'])) {
-        $mail->SMTPSecure = $config['email']['smtp']['secure'];
-    }
-    $mail->setFrom($config['email']['from']);
-    $mail->addAddress($email);
-    $mail->Subject = $subject;
-    $mail->Body = $message;
-    $mail->send();
-} else {
-    $headers = 'From: ' . $config['email']['from'] . "\r\n";
-    @mail($email, $subject, $message, $headers);
+    $logger->info('Login email sent successfully', ['email' => $email]);
+} catch (Exception $e) {
+    $logger->error('Failed to send login email', ['email' => $email, 'error' => $e->getMessage()]);
+    http_response_code(500);
+    echo json_encode(['error' => 'Failed to send login email.']);
+    exit;
 }
+
 
 echo json_encode(['sent' => true]);
