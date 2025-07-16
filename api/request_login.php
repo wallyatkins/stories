@@ -7,19 +7,19 @@ require_https();
 start_session();
 header('Content-Type: application/json');
 
-$logger->info('Login request received');
+$email = $_POST['email'] ?? '';
+$GLOBALS['logger']->info('Login request received', ['email' => $email]);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    $logger->warning('Login request rejected: Not a POST request');
+    $GLOBALS['logger']->warning('Login request rejected: Not a POST request', ['email' => $email]);
     echo json_encode(['error' => 'POST required']);
     exit;
 }
 
-$email = $_POST['email'] ?? '';
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     http_response_code(400);
-    $logger->warning('Login request failed: Invalid email provided', ['email' => $email]);
+    $GLOBALS['logger']->warning('Login request failed: Invalid email provided', ['email' => $email]);
     echo json_encode(['error' => 'Invalid email']);
     exit;
 }
@@ -31,7 +31,7 @@ $stmt->execute([$email]);
 $userId = $stmt->fetchColumn();
 if (!$userId) {
     http_response_code(400);
-    $logger->warning('Login request failed: Unrecognized email', ['email' => $email]);
+    $GLOBALS['logger']->warning('Login request failed: Unrecognized email', ['email' => $email]);
     echo json_encode(['error' => 'Email not recognized']);
     exit;
 }
@@ -44,6 +44,7 @@ if (!is_dir($tokenDir)) {
 }
 $tokenData = ['email' => $email, 'ts' => time()];
 file_put_contents("$tokenDir/$token.json", json_encode($tokenData));
+$GLOBALS['logger']->info('Login token created', ['email' => $email]);
 $link = 'https://' . $_SERVER['HTTP_HOST'] . '/verify-login/' . $token;
 // send email using config
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -76,9 +77,9 @@ try {
             throw new Exception('mail() function failed');
         }
     }
-    $logger->info('Login email sent successfully', ['email' => $email]);
+    $GLOBALS['logger']->info('Login email sent successfully', ['email' => $email]);
 } catch (Exception $e) {
-    $logger->error('Failed to send login email', ['email' => $email, 'error' => $e->getMessage()]);
+    $GLOBALS['logger']->error('Failed to send login email', ['email' => $email, 'error' => $e->getMessage()]);
     http_response_code(500);
     echo json_encode(['error' => 'Failed to send login email.']);
     exit;

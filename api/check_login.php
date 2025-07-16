@@ -1,8 +1,11 @@
 <?php
+require_once __DIR__ . '/logger.php';
 require_once __DIR__ . '/auth.php';
 require_https();
 start_session();
 header('Content-Type: application/json');
+
+$GLOBALS['logger']->info('Checking login status via API endpoint.');
 
 $authenticated = check_login();
 $response = ['authenticated' => $authenticated];
