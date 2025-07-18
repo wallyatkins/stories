@@ -13,7 +13,7 @@ export default function RecordPrompt() {
 
   useEffect(() => {
     if (!friend) {
-      fetch('api/list_friends')
+      fetch('/api/list_friends')
         .then(res => res.json())
         .then(data => {
           const f = data.find(fr => String(fr.id) === String(friendId));
@@ -33,7 +33,7 @@ export default function RecordPrompt() {
     const formData = new FormData();
     formData.append('video', recordedBlob, 'prompt.mp4');
     formData.append('friend_id', friend.id);
-    await fetch('api/upload_prompt', {
+    await fetch('/api/upload_prompt', {
       method: 'POST',
       body: formData,
     });

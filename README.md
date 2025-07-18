@@ -8,29 +8,47 @@ This project is a simple web application that allows users to record short video
 - `client` – Vite React application with Tailwind for styling.
 - `uploads` – Directory where uploaded videos are stored.
 
-## Getting Started
+## Local Development Environment
 
-1. **Install dependencies** (requires Node):
-   ```bash
-   cd client && npm install
-   ```
-   This will install `@vitejs/plugin-react` alongside React and Tailwind.
-2. **Run the client in development mode**:
-   ```bash
-   cd client
-   npm run dev
-   ```
-   The built site will be output to `build/` when you run `npm run build`.
-3. **Serve with PHP** (after building):
-   ```bash
-   php -S localhost:8000
-   ```
+This project uses **Docker** to create a local development environment that is an exact replica of the production build artifact. The entire application is built and served from within a self-contained Docker image, mirroring the deployment process.
 
-   The PHP built-in server should be started from the project root so the `api/`
-   endpoints are available.
+### Prerequisites
 
-Uploaded videos are stored in the `uploads/` directory alongside the PHP scripts.
-Apache users should enable `.htaccess` so that HTTP requests are redirected to HTTPS and video files are served through `api/video` for authenticated sessions.
+- [Docker](https://docs.docker.com/get-docker/)
+
+### Setup and Running
+
+1.  **Configure Environment**
+    Copy the example environment file. This is used by the PHP application inside the container to connect to the database.
+    ```bash
+    cp .env.example .env
+    ```
+
+2.  **Build and Run the Application**
+    Use Docker Compose to build the image and start the services. The `Dockerfile` handles all dependencies and build steps for both the frontend and backend.
+    ```bash
+    docker compose up -d --build
+    ```
+
+Your application is now running at **[http://localhost:8080](http://localhost:8080)**.
+
+### Development Workflow
+
+Because the application is fully built inside the Docker image, this setup does not support hot-reloading or live code changes.
+
+**To see any changes to your code (frontend or backend), you must rebuild the image:**
+```bash
+docker compose up -d --build
+```
+
+### Stopping the Environment
+
+When you are finished, stop the Docker containers:
+```bash
+docker compose down
+```
+Your PostgreSQL data is persisted in a Docker volume and will be available on the next start.
+
 
 ## Login Flow
 
@@ -69,30 +87,9 @@ base. Environment variables `MAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`,
 `DB_DSN`, `DB_USER` and `DB_PASS` configure the PostgreSQL connection used for
 whitelisted accounts and friend relationships.
 
-### PostgreSQL tables
+### Database Migrations
 
-Two tables are expected:
-
-```
-CREATE TABLE users (
-  id SERIAL PRIMARY KEY,
-  email TEXT UNIQUE NOT NULL,
-  username TEXT,
-  avatar TEXT
-);
-
-CREATE TABLE friends (
-  user_id INTEGER NOT NULL REFERENCES users(id),
-  friend_user_id INTEGER NOT NULL REFERENCES users(id)
-);
-```
-
-Each row in `friends` defines a relationship from `user_id` to
-`friend_user_id`. Insert rows in both directions for mutual friendships.
-
-The schema above is stored in `database/init.sql`. Future changes will live in
-numbered files under `database/migrations/`. Apply new migrations in order when
-deploying updates so the database stays in sync with the application.
+The database schema is managed through SQL migration files located in the `database/migrations/` directory. When the Docker environment is started for the first time, it will automatically execute all scripts in this folder in sequential order to initialize the database.
 
 ## PHP Backend Setup
 

@@ -11,7 +11,7 @@ export default function LoginForm() {
     setLoading(true);
     const formData = new FormData();
     formData.append('email', email);
-    const res = await fetch('api/request_login', {
+    const res = await fetch('/api/request_login', {
       method: 'POST',
       body: formData,
     });

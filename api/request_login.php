@@ -3,7 +3,6 @@ require_once __DIR__ . '/../api/logger.php';
 require_once __DIR__ . '/auth.php';
 $config = require __DIR__ . '/../config.php';
 require_once __DIR__ . '/db.php';
-require_https();
 start_session();
 header('Content-Type: application/json');
 
@@ -45,7 +44,11 @@ if (!is_dir($tokenDir)) {
 $tokenData = ['email' => $email, 'ts' => time()];
 file_put_contents("$tokenDir/$token.json", json_encode($tokenData));
 $GLOBALS['logger']->info('Login token created', ['email' => $email]);
-$link = 'https://' . $_SERVER['HTTP_HOST'] . '/verify-login/' . $token;
+if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+    $link = 'https://' . $_SERVER['HTTP_HOST'] . '/verify-login/' . $token;
+} else {
+    $link = 'http://' . $_SERVER['HTTP_HOST'] . '/verify-login/' . $token;
+}
 // send email using config
 require_once __DIR__ . '/../vendor/autoload.php';
 

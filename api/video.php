@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . '/logger.php';
 require_once __DIR__ . '/auth.php';
-require_https();
 require_login();
 
 $user = $_SESSION['user'];

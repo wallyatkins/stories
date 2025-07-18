@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . '/logger.php';
 require_once __DIR__ . '/auth.php';
-require_https();
 require_login();
 header('Content-Type: application/json');
 
@@ -28,12 +27,24 @@ move_uploaded_file($_FILES['video']['tmp_name'], "$uploadsDir/$filename");
 
 $GLOBALS['logger']->info('Response video uploaded.', ['user_id' => $user['id'], 'email' => $user['email'], 'prompt' => $prompt, 'filename' => $filename]);
 
-$responsesFile = "$metadataDir/$prompt.json";
-$responses = file_exists($responsesFile) ? json_decode(file_get_contents($responsesFile), true) : [];
-$responses[] = ['filename' => $filename, 'user' => $user];
-file_put_contents($responsesFile, json_encode($responses, JSON_PRETTY_PRINT));
+// Get prompt ID from the database
+$pdo = db();
+$stmt = $pdo->prepare('SELECT id FROM prompts WHERE filename = ?');
+$stmt->execute([$prompt]);
+$promptId = $stmt->fetchColumn();
 
-$GLOBALS['logger']->info('Response metadata updated.', ['user_id' => $user['id'], 'email' => $user['email'], 'prompt' => $prompt, 'filename' => $filename]);
+if (!$promptId) {
+    http_response_code(404);
+    $GLOBALS['logger']->error('Prompt not found in database for response.', ['prompt_filename' => $prompt]);
+    echo json_encode(['error' => 'Prompt not found.']);
+    exit;
+}
+
+// Save the response to the database
+$stmt = $pdo->prepare('INSERT INTO responses (prompt_id, user_id, filename) VALUES (?, ?, ?)');
+$stmt->execute([$promptId, $user['id'], $filename]);
+
+$GLOBALS['logger']->info('Response metadata updated in database.', ['user_id' => $user['id'], 'prompt_id' => $promptId, 'filename' => $filename]);
 
 echo json_encode(['filename' => $filename]);
 

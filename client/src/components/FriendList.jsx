@@ -6,7 +6,7 @@ export default function FriendList() {
   const [friends, setFriends] = useState([]);
 
   useEffect(() => {
-    fetch('api/list_friends')
+    fetch('/api/list_friends')
       .then((res) => res.json())
       .then((data) => setFriends(data));
   }, []);

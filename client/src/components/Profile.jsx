@@ -11,7 +11,7 @@ export default function Profile({ user, onUpdated, onClose }) {
     const formData = new FormData();
     formData.append('username', username);
     if (avatar) formData.append('avatar', avatar);
-    const res = await fetch('api/update_profile', {
+    const res = await fetch('/api/update_profile', {
       method: 'POST',
       body: formData,
     });

@@ -1,14 +1,7 @@
 <?php
 require_once __DIR__ . '/logger.php';
 
-function require_https() {
-    if (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] !== 'on') {
-        $GLOBALS['logger']->info('Redirecting to HTTPS');
-        $url = 'https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-        header('Location: ' . $url, true, 301);
-        exit;
-    }
-}
+
 
 function start_session() {
     if (session_status() === PHP_SESSION_NONE) {

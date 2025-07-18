@@ -2,7 +2,6 @@
 require_once __DIR__ . '/../api/logger.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/db.php';
-require_https();
 $prompt = basename($_GET['prompt'] ?? '');
 start_session();
 
@@ -43,9 +42,9 @@ if ($token !== '' && file_exists($tokenFile)) {
 
     $_SESSION['user'] = $user;
     $GLOBALS['logger']->info('Login successful', ['user_id' => $user['id'], 'email' => $user['email']]);
-    $redirect = '/prompts';
+    $redirect = '/contacts';
     if ($prompt !== '') {
-        $redirect .= '?prompt=' . rawurlencode($prompt);
+        $redirect = '/prompts?prompt=' . rawurlencode($prompt);
     }
     header('Location: ' . $redirect);
     exit;

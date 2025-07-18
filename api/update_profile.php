@@ -2,7 +2,6 @@
 require_once __DIR__ . '/logger.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/db.php';
-require_https();
 require_login();
 start_session();
 header('Content-Type: application/json');

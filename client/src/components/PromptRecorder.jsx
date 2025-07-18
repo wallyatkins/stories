@@ -8,7 +8,7 @@ export default function PromptRecorder({ friend, onFinish }) {
     const formData = new FormData();
     formData.append('video', blob, 'prompt.mp4');
     formData.append('friend_id', friend.id);
-    const res = await fetch('api/upload_prompt', {
+    const res = await fetch('/api/upload_prompt', {
       method: 'POST',
       body: formData,
     });

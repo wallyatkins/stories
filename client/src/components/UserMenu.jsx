@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 
-export default function UserMenu({ user, onLogout, onProfile }) {
+export default function UserMenu({ user }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -14,42 +15,38 @@ export default function UserMenu({ user, onLogout, onProfile }) {
     return () => document.removeEventListener('click', handleClick);
   }, []);
 
-  const avatarLetter = user && (user.username || user.email)
-    ? (user.username || user.email).charAt(0).toUpperCase()
-    : '?';
+  if (!user) {
+    return null;
+  }
+
+  const avatarUrl = user.avatar
+    ? `/uploads/avatars/${user.avatar}`
+    : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=random&color=fff`;
 
   return (
     <div className="relative" ref={menuRef}>
       <button
-        className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm overflow-hidden"
+        className="w-10 h-10 rounded-full bg-gold flex items-center justify-center text-sm overflow-hidden border-2 border-gold"
         onClick={() => setOpen(!open)}
       >
-        {user && user.avatar ? (
-          <img src={`uploads/avatars/${user.avatar}`} alt="avatar" className="w-full h-full object-cover" />
-        ) : (
-          avatarLetter
-        )}
+        <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 bg-white border rounded shadow-md text-sm">
-          <button
-            className="block px-4 py-2 hover:bg-gray-100 w-full text-left"
-            onClick={() => {
-              setOpen(false);
-              onProfile();
-            }}
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 text-gray-800">
+          <Link
+            to="/profile"
+            className="block px-4 py-2 text-sm hover:bg-gray-100"
+            onClick={() => setOpen(false)}
           >
             Profile
-          </button>
-          <button
-            className="block px-4 py-2 hover:bg-gray-100 w-full text-left"
-            onClick={() => {
-              setOpen(false);
-              onLogout();
-            }}
+          </Link>
+          <Link
+            to="/logout"
+            className="block px-4 py-2 text-sm hover:bg-gray-100"
+            onClick={() => setOpen(false)}
           >
             Logout
-          </button>
+          </Link>
         </div>
       )}
     </div>

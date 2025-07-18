@@ -6,7 +6,6 @@ require_once __DIR__ . '/db.php';
 $config = require __DIR__ . '/../config.php';
 
 try {
-    require_https();
     require_login();
     header('Content-Type: application/json');
 
@@ -53,9 +52,14 @@ try {
         exit;
     }
 
-    $GLOBALS['logger']->info('Prompt video uploaded successfully.', ['user_id' => $user['id'], 'email' => $user['email'], 'filename' => $filename]);
-
     $friendId = intval($_POST['friend_id'] ?? 0);
+
+    // Add prompt to the database
+    $pdo = db();
+    $stmt = $pdo->prepare('INSERT INTO prompts (user_id, friend_id, filename) VALUES (?, ?, ?)');
+    $stmt->execute([$user['id'], $friendId, $filename]);
+    $GLOBALS['logger']->info('Prompt saved to database.', ['user_id' => $user['id'], 'friend_id' => $friendId, 'filename' => $filename]);
+
     if ($friendId > 0) {
         $GLOBALS['logger']->info('Sending prompt to friend.', ['user_id' => $user['id'], 'email' => $user['email'], 'friend_id' => $friendId]);
         $pdo = db();
