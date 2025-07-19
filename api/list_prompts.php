@@ -11,18 +11,30 @@ try {
     $GLOBALS['logger']->info('List prompts request.', ['user_id' => $user['id']]);
 
     $pdo = db();
-    // Select prompts sent to the current user and join to get the sender's info
-    $stmt = $pdo->prepare(
+
+    // Select prompts sent to the current user (received)
+    $stmt_received = $pdo->prepare(
         'SELECT p.filename, p.created_at, u.username, u.email AS user_email
          FROM prompts p
          JOIN users u ON p.user_id = u.id
-         WHERE p.friend_id = ?
+         WHERE p.friend_id = ? AND p.created_at >= NOW() - INTERVAL \'1 week\'
          ORDER BY p.created_at DESC'
     );
-    $stmt->execute([$user['id']]);
-    $prompts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt_received->execute([$user['id']]);
+    $received_prompts = $stmt_received->fetchAll(PDO::FETCH_ASSOC);
 
-    echo json_encode($prompts);
+    // Select prompts sent by the current user (sent)
+    $stmt_sent = $pdo->prepare(
+        'SELECT p.filename, p.created_at, u.username, u.email AS user_email
+         FROM prompts p
+         JOIN users u ON p.friend_id = u.id
+         WHERE p.user_id = ? AND p.created_at >= NOW() - INTERVAL \'1 week\'
+         ORDER BY p.created_at DESC'
+    );
+    $stmt_sent->execute([$user['id']]);
+    $sent_prompts = $stmt_sent->fetchAll(PDO::FETCH_ASSOC);
+
+    echo json_encode(['received' => $received_prompts, 'sent' => $sent_prompts]);
 
 } catch (Throwable $e) {
     $GLOBALS['logger']->critical('Unhandled exception in list_prompts.php', [

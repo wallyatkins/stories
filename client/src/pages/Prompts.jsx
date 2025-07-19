@@ -3,15 +3,21 @@ import { Link } from 'react-router-dom';
 import PromptIcon from '../assets/prompt.svg?react';
 
 export default function Prompts() {
-  const [prompts, setPrompts] = useState([]);
+  const [receivedPrompts, setReceivedPrompts] = useState([]);
+  const [sentPrompts, setSentPrompts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchPrompts() {
       try {
-        const res = await fetch('/api/list_prompts');
+        const res = await fetch('/api/list_prompts.php');
         const data = await res.json();
-        setPrompts(data);
+        if (data.received) {
+          setReceivedPrompts(data.received);
+        }
+        if (data.sent) {
+          setSentPrompts(data.sent);
+        }
       } catch (error) {
         console.error('Failed to fetch prompts:', error);
       } finally {
@@ -32,9 +38,11 @@ export default function Prompts() {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Prompts</h1>
-      {prompts.length > 0 ? (
-        <ul className="space-y-2">
-          {prompts.map((prompt) => (
+
+      <h2 className="text-xl font-bold mb-2">Received Prompts</h2>
+      {receivedPrompts.length > 0 ? (
+        <ul className="space-y-2 mb-6">
+          {receivedPrompts.map((prompt) => (
             <li
               key={prompt.filename}
               className="p-4 border rounded-lg flex justify-between items-center"
@@ -60,6 +68,37 @@ export default function Prompts() {
         </ul>
       ) : (
         <p>You have not received any prompts yet.</p>
+      )}
+
+      <h2 className="text-xl font-bold mb-2">Sent Prompts</h2>
+      {sentPrompts.length > 0 ? (
+        <ul className="space-y-2">
+          {sentPrompts.map((prompt) => (
+            <li
+              key={prompt.filename}
+              className="p-4 border rounded-lg flex justify-between items-center"
+            >
+              <div>
+                <p>
+                  To:{' '}
+                  <strong>{prompt.username || prompt.user_email}</strong>
+                </p>
+                <p className="text-sm text-gray-500">
+                  Sent: {new Date(prompt.created_at).toLocaleString()}
+                </p>
+              </div>
+              <Link
+                to={`/watch/${prompt.filename}`}
+                className="text-teal hover:opacity-80"
+                title="Watch Prompt"
+              >
+                <PromptIcon className="w-10 h-10" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>You have not sent any prompts yet.</p>
       )}
     </div>
   );
