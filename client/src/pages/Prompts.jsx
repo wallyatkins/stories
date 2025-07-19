@@ -57,7 +57,7 @@ export default function Prompts() {
                 </p>
               </div>
               <Link
-                to={`/watch/${prompt.filename}`}
+                to={`/prompt/${prompt.id}`}
                 className="text-teal hover:opacity-80"
                 title="Watch Prompt"
               >
