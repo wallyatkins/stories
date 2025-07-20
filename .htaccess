@@ -2,6 +2,10 @@ RewriteEngine On
 
 # Set cache-control headers
 <IfModule mod_headers.c>
+  # Set COOP and COEP headers for SharedArrayBuffer
+  Header set Cross-Origin-Opener-Policy "same-origin"
+  Header set Cross-Origin-Embedder-Policy "require-corp"
+
   # Don't cache the main page
   <Files "index.html">
     Header set Cache-Control "no-cache, no-store, must-revalidate"
