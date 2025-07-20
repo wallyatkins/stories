@@ -73,7 +73,7 @@ export default function ViewPrompt() {
     );
   }
 
-  const videoSrc = `/uploads/${prompt.filename}`;
+  const videoSrc = `/api/video.php?file=${prompt.filename}`;
 
   return (
     <div className="container mx-auto p-4 flex flex-col items-center">
