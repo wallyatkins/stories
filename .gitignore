@@ -4,3 +4,4 @@ build/
 .env
 vendor/
 composer.phar
+AGENTS.md
