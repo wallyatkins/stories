@@ -3,6 +3,7 @@ require_once __DIR__ . '/../api/logger.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/db.php';
 $prompt = basename($_GET['prompt'] ?? '');
+$responseFilename = basename($_GET['response'] ?? '');
 start_session();
 
 $token = $_GET['token'] ?? '';
@@ -43,7 +44,9 @@ if ($token !== '' && file_exists($tokenFile)) {
     $_SESSION['user'] = $user;
     $GLOBALS['logger']->info('Login successful', ['user_id' => $user['id'], 'email' => $user['email']]);
     $redirect = '/contacts';
-    if ($prompt !== '') {
+    if ($responseFilename !== '') {
+        $redirect = '/watch/' . rawurlencode($responseFilename);
+    } elseif ($prompt !== '') {
         $redirect = '/prompts?prompt=' . rawurlencode($prompt);
     }
     header('Location: ' . $redirect);

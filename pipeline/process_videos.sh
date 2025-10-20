@@ -126,11 +126,17 @@ log() {
 }
 
 json_escape() {
-  local s="${1//\\/\\\\}"
-  s="${s//$'\n'/\\n}"
-  s="${s//$'\r'/\\r}"
-  s="${s//$'\t'/\\t}"
-  s="${s//"/\\\"}"
+  local s="$1"
+  local newline=$'\n'
+  local carriage=$'\r'
+  local tab=$'\t'
+  local dq='"'
+  local escaped_dq='\"'
+  s=${s//\\/\\\\}
+  s=${s//${newline}/\n}
+  s=${s//${carriage}/\r}
+  s=${s//${tab}/\t}
+  s=${s//${dq}/${escaped_dq}}
   printf '%s' "$s"
 }
 
@@ -146,16 +152,21 @@ notify_pipeline() {
   fi
 
   if [[ "$DRY_RUN" == true ]]; then
-    log info "(dry-run) would notify pipeline API about $original"
+    log info "dry-run would notify pipeline API about $original"
     return
   fi
 
   local payload
-  payload=$(printf '{"filename":"%s","manifest_path":"%s","variants":{"mp4":"%s","webm":"%s"}}' \
-    "$(json_escape "$original")" \
-    "$(json_escape "$manifest")" \
-    "$(json_escape "$mp4")" \
-    "$(json_escape "$webm")")
+  local original_json manifest_json mp4_json webm_json
+  original_json=$(json_escape "$original")
+  manifest_json=$(json_escape "$manifest")
+  mp4_json=$(json_escape "$mp4")
+  webm_json=$(json_escape "$webm")
+  printf -v payload '{"filename":"%s","manifest_path":"%s","variants":{"mp4":"%s","webm":"%s"}}' \
+    "$original_json" \
+    "$manifest_json" \
+    "$mp4_json" \
+    "$webm_json"
 
   local tmp
   tmp=$(mktemp)
@@ -172,14 +183,16 @@ notify_pipeline() {
   if [[ "$http_code" =~ ^2 ]]; then
     log info "Notified API that $original is processed"
   else
-    log warn "Pipeline API returned $http_code for $original: $(tr -d '\r' < "$tmp")"
+    local response_body
+    response_body=$(tr -d '\r' < "$tmp")
+    log warn "Pipeline API returned $http_code for $original: $response_body"
   fi
   rm -f "$tmp"
 }
 
 run_cmd() {
   if [[ "$DRY_RUN" == true ]]; then
-    log debug "(dry-run) $*"
+    log debug "dry-run $*"
     return 0
   fi
   "$@"
@@ -248,7 +261,7 @@ upload_derivatives() {
   if [[ "$DRY_RUN" == false ]]; then
     "$SSH_BIN" "$REMOTE_SSH" "mkdir -p '$remote_target'"
   else
-    log debug "(dry-run) would ensure remote directory $remote_target"
+    log debug "dry-run would ensure remote directory $remote_target"
   fi
 
   local rsync_src="$output_dir/"
@@ -270,7 +283,7 @@ upload_derivatives() {
   if [[ "$DRY_RUN" == false ]]; then
     "$SSH_BIN" "$REMOTE_SSH" "touch '$remote_target/${stem}${REMOTE_DONE_SUFFIX}'"
   else
-    log debug "(dry-run) would create remote done marker"
+    log debug "dry-run would create remote done marker"
   fi
 }
 
@@ -296,7 +309,7 @@ transcode_file() {
   if [[ "$ext" == "$src" ]]; then
     ext=""
   else
-    ext="${ext,,}"
+    ext=$(printf '%s' "$ext" | tr '[:upper:]' '[:lower:]')
   fi
   case "$ext" in
     mp4|mov|m4v|webm|mkv|mpg|mpeg|avi)
@@ -307,7 +320,7 @@ transcode_file() {
       return 0
       ;;
     *)
-      log info "Skipping unsupported file type ($ext): $rel"
+      log info "Skipping unsupported file type: $ext for $rel"
       mark_state "$rel"
       return 0
       ;;
@@ -406,7 +419,7 @@ transcode_file() {
 }
 JSON
   else
-    log debug "(dry-run) would write manifest to $manifest_path"
+    log debug "dry-run would write manifest to $manifest_path"
   fi
 
   if [[ "$UPLOAD_DERIVATIVES" == true ]]; then

@@ -84,7 +84,10 @@ export default function Stories() {
       <h2 className="text-xl font-bold mb-2">Sent Stories</h2>
       {sentStories.length > 0 ? (
         <ul className="space-y-2">
-          {sentStories.map((story) => (
+          {sentStories.map((story) => {
+            const status = story.status || 'processed';
+            const isProcessed = status === 'processed';
+            return (
             <li
               key={story.filename}
               className="p-4 border rounded-lg flex justify-between items-center"
@@ -107,16 +110,24 @@ export default function Stories() {
                 <p className="text-sm text-gray-500">
                   Sent: {new Date(story.created_at).toLocaleString()}
                 </p>
+                <p className="text-sm text-gray-500">
+                  Status: {isProcessed ? 'Ready' : 'Processing'}
+                </p>
               </div>
-              <Link
-                to={`/watch/${story.filename}`}
-                className="text-gold hover:opacity-80"
-                title="Watch Story"
-              >
-                <StoryIcon className="w-10 h-10" />
-              </Link>
+              {isProcessed ? (
+                <Link
+                  to={`/watch/${story.filename}`}
+                  className="text-gold hover:opacity-80"
+                  title="Watch Story"
+                >
+                  <StoryIcon className="w-10 h-10" />
+                </Link>
+              ) : (
+                <span className="text-gray-400 text-sm">Processing…</span>
+              )}
             </li>
-          ))}
+            );
+          })}
         </ul>
       ) : (
         <p>You have not sent any stories yet.</p>
