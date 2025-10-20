@@ -13,9 +13,26 @@ $pdo = db();
 
 $username = $_POST['username'] ?? null;
 $avatarFile = $_FILES['avatar']['tmp_name'] ?? null;
+$avatarName = $_FILES['avatar']['name'] ?? null;
 $updates = [];
 $params = [];
 $updated_fields = [];
+$oldAvatar = $user['avatar'] ?? null;
+
+$deleteAvatar = static function (?string $filename): void {
+    if (!$filename) {
+        return;
+    }
+    $paths = [
+        __DIR__ . '/../avatars/' . $filename,
+        __DIR__ . '/../uploads/avatars/' . $filename,
+    ];
+    foreach ($paths as $path) {
+        if (is_file($path)) {
+            @unlink($path);
+        }
+    }
+};
 
 if ($username !== null) {
     $updates[] = 'username = ?';
@@ -24,14 +41,51 @@ if ($username !== null) {
     $updated_fields[] = 'username';
 }
 
-if ($avatarFile) {
-    $avatarsDir = __DIR__ . '/../uploads/avatars';
-    if (!is_dir($avatarsDir)) {
-        mkdir($avatarsDir, 0777, true);
+if ($avatarFile && $avatarName) {
+    $mime = mime_content_type($avatarFile) ?: '';
+    if (strpos($mime, 'image/') !== 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid avatar file.']);
+        exit;
     }
-    $ext = pathinfo($_FILES['avatar']['name'], PATHINFO_EXTENSION);
-    $filename = uniqid() . ($ext ? '.' . $ext : '');
-    move_uploaded_file($avatarFile, "$avatarsDir/$filename");
+
+    $avatarsDir = __DIR__ . '/../avatars';
+    if (!is_dir($avatarsDir) && !mkdir($avatarsDir, 0777, true)) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Unable to create avatar directory.']);
+        exit;
+    }
+
+    $ext = strtolower(pathinfo($avatarName, PATHINFO_EXTENSION));
+    if ($ext === '') {
+        switch ($mime) {
+            case 'image/jpeg':
+                $ext = 'jpg';
+                break;
+            case 'image/png':
+                $ext = 'png';
+                break;
+            case 'image/gif':
+                $ext = 'gif';
+                break;
+            case 'image/webp':
+                $ext = 'webp';
+                break;
+            default:
+                $ext = 'img';
+                break;
+        }
+    }
+    $filename = uniqid('avatar_', true) . ($ext ? '.' . $ext : '');
+
+    if (!move_uploaded_file($avatarFile, "$avatarsDir/$filename")) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Failed to save avatar image.']);
+        exit;
+    }
+
+    $deleteAvatar($oldAvatar);
+
     $updates[] = 'avatar = ?';
     $params[] = $filename;
     $_SESSION['user']['avatar'] = $filename;
@@ -53,4 +107,3 @@ if ($updates) {
 }
 
 echo json_encode(['user' => $_SESSION['user']]);
-

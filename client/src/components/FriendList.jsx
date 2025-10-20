@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import AvatarImage from './AvatarImage';
 
 export default function FriendList() {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ export default function FriendList() {
         {friends.map((f, i) => (
           <li key={i} className="flex items-center space-x-2">
             {f.avatar ? (
-              <img src={`uploads/avatars/${f.avatar}`} alt="avatar" className="w-8 h-8 rounded-full object-cover" />
+              <AvatarImage filename={f.avatar} alt="avatar" className="w-8 h-8 rounded-full object-cover" />
             ) : (
               <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm">
                 {(f.username || f.email).charAt(0).toUpperCase()}

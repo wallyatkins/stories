@@ -14,10 +14,12 @@ try {
 
     // Select prompts sent to the current user (received)
     $stmt_received = $pdo->prepare(
-        'SELECT p.id, p.filename, p.created_at, u.username, u.email AS user_email
+        'SELECT p.id, p.filename, p.created_at, p.status, p.processed_manifest, p.processed_at, u.username, u.email AS user_email
          FROM prompts p
          JOIN users u ON p.user_id = u.id
-         WHERE p.friend_id = ? AND p.created_at >= NOW() - INTERVAL \'1 week\'
+         WHERE p.friend_id = ?
+           AND p.status = \'processed\'
+           AND p.created_at >= NOW() - INTERVAL \'1 week\'
          ORDER BY p.created_at DESC'
     );
     $stmt_received->execute([$user['id']]);
@@ -25,7 +27,7 @@ try {
 
     // Select prompts sent by the current user (sent)
     $stmt_sent = $pdo->prepare(
-        'SELECT p.id, p.filename, p.created_at, u.username, u.email AS user_email
+        'SELECT p.id, p.filename, p.created_at, p.status, p.processed_manifest, p.processed_at, u.username, u.email AS user_email
          FROM prompts p
          JOIN users u ON p.friend_id = u.id
          WHERE p.user_id = ? AND p.created_at >= NOW() - INTERVAL \'1 week\'

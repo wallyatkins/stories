@@ -27,6 +27,10 @@ return [
             'secure' => getenv('SMTP_SECURE') ?: 'tls'
         ]
     ],
+    'pipeline' => [
+        // Generate with: openssl rand -hex 32
+        'token' => getenv('PIPELINE_API_TOKEN') ?: ''
+    ],
     'db' => [
         'dsn' => getenv('DB_DSN') ?: '',
         'user' => getenv('DB_USER') ?: '',

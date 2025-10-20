@@ -8,17 +8,27 @@ export default function Profile({ user, onUpdated, onClose }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
-    const formData = new FormData();
-    formData.append('username', username);
-    if (avatar) formData.append('avatar', avatar);
-    const res = await fetch('/api/update_profile', {
-      method: 'POST',
-      body: formData,
-    });
-    const data = await res.json();
-    setSaving(false);
-    onUpdated(data.user);
-    onClose();
+    try {
+      const formData = new FormData();
+      formData.append('username', username);
+      if (avatar) formData.append('avatar', avatar);
+      const res = await fetch('/api/update_profile.php', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) {
+        const message = await res.text();
+        console.error('Failed to update profile:', message);
+        return;
+      }
+      const data = await res.json();
+      onUpdated(data.user);
+      onClose();
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -58,4 +68,3 @@ export default function Profile({ user, onUpdated, onClose }) {
     </div>
   );
 }
-

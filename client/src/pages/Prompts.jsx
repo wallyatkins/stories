@@ -73,29 +73,40 @@ export default function Prompts() {
       <h2 className="text-xl font-bold mb-2">Sent Prompts</h2>
       {sentPrompts.length > 0 ? (
         <ul className="space-y-2">
-          {sentPrompts.map((prompt) => (
-            <li
-              key={prompt.filename}
-              className="p-4 border rounded-lg flex justify-between items-center"
-            >
-              <div>
-                <p>
-                  To:{' '}
-                  <strong>{prompt.username || prompt.user_email}</strong>
-                </p>
-                <p className="text-sm text-gray-500">
-                  Sent: {new Date(prompt.created_at).toLocaleString()}
-                </p>
-              </div>
-              <Link
-                to={`/watch/${prompt.filename}`}
-                className="text-teal hover:opacity-80"
-                title="Watch Prompt"
+          {sentPrompts.map((prompt) => {
+            const status = prompt.status || 'processed';
+            const isProcessed = status === 'processed';
+            return (
+              <li
+                key={prompt.filename}
+                className="p-4 border rounded-lg flex justify-between items-center"
               >
-                <PromptIcon className="w-10 h-10" />
-              </Link>
-            </li>
-          ))}
+                <div>
+                  <p>
+                    To:{' '}
+                    <strong>{prompt.username || prompt.user_email}</strong>
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Sent: {new Date(prompt.created_at).toLocaleString()}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Status: {isProcessed ? 'Ready' : 'Processing'}
+                  </p>
+                </div>
+                {isProcessed ? (
+                  <Link
+                    to={`/watch/${prompt.filename}`}
+                    className="text-teal hover:opacity-80"
+                    title="Watch Prompt"
+                  >
+                    <PromptIcon className="w-10 h-10" />
+                  </Link>
+                ) : (
+                  <span className="text-gray-400 text-sm">Processing…</span>
+                )}
+              </li>
+            );
+          })}
         </ul>
       ) : (
         <p>You have not sent any prompts yet.</p>

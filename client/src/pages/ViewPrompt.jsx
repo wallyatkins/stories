@@ -79,6 +79,7 @@ export default function ViewPrompt() {
       <div className="w-full max-w-4xl">
         <ProcessedVideoPlayer
           filename={prompt.filename}
+          manifestPath={prompt.processed_manifest}
           autoPlay
           className="rounded-lg shadow-xl mb-4"
         />

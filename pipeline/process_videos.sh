@@ -16,6 +16,7 @@ REMOTE_DONE_SUFFIX="${REMOTE_DONE_SUFFIX:-.done}"
 FFMPEG_BIN="${FFMPEG_BIN:-ffmpeg}"
 RSYNC_BIN="${RSYNC_BIN:-rsync}"
 SSH_BIN="${SSH_BIN:-ssh}"
+CURL_BIN="${CURL_BIN:-curl}"
 PRESERVE_ORIGINALS="${PRESERVE_ORIGINALS:-true}"
 UPLOAD_DERIVATIVES="${UPLOAD_DERIVATIVES:-true}"
 LOG_LEVEL="${LOG_LEVEL:-info}"
@@ -27,6 +28,9 @@ LOCAL_ARCHIVE="${LOCAL_ARCHIVE:-$LOCAL_ROOT/archive}"
 LOCAL_FAILED="${LOCAL_FAILED:-$LOCAL_ROOT/failed}"
 LOCAL_STATE_DIR="${LOCAL_STATE_DIR:-$LOCAL_ROOT/state}"
 LOCAL_LOG_DIR="${LOCAL_LOG_DIR:-$LOCAL_ROOT/logs}"
+
+PIPELINE_API_URL="${PIPELINE_API_URL:-}"
+PIPELINE_API_TOKEN="${PIPELINE_API_TOKEN:-}"
 
 DRY_RUN=false
 NO_SYNC=false
@@ -93,6 +97,9 @@ fi
 assert_binary "$FFMPEG_BIN"
 assert_binary "$RSYNC_BIN"
 assert_binary "$SSH_BIN"
+if [[ -n "$PIPELINE_API_URL" ]]; then
+  assert_binary "$CURL_BIN"
+fi
 
 log_priority() {
   case "$1" in
@@ -118,6 +125,58 @@ log() {
   fi
 }
 
+json_escape() {
+  local s="${1//\\/\\\\}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\r'/\\r}"
+  s="${s//$'\t'/\\t}"
+  s="${s//"/\\\"}"
+  printf '%s' "$s"
+}
+
+notify_pipeline() {
+  local original="$1"
+  local manifest="$2"
+  local mp4="$3"
+  local webm="$4"
+
+  if [[ -z "$PIPELINE_API_URL" || -z "$PIPELINE_API_TOKEN" ]]; then
+    log debug "Pipeline API not configured; skipping notification for $original"
+    return
+  fi
+
+  if [[ "$DRY_RUN" == true ]]; then
+    log info "(dry-run) would notify pipeline API about $original"
+    return
+  fi
+
+  local payload
+  payload=$(printf '{"filename":"%s","manifest_path":"%s","variants":{"mp4":"%s","webm":"%s"}}' \
+    "$(json_escape "$original")" \
+    "$(json_escape "$manifest")" \
+    "$(json_escape "$mp4")" \
+    "$(json_escape "$webm")")
+
+  local tmp
+  tmp=$(mktemp)
+  local http_code
+  if ! http_code=$("$CURL_BIN" -sS -w '%{http_code}' -o "$tmp" -X POST "$PIPELINE_API_URL" \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer $PIPELINE_API_TOKEN" \
+      --data "$payload"); then
+    log warn "Failed to invoke pipeline API for $original"
+    rm -f "$tmp"
+    return
+  fi
+
+  if [[ "$http_code" =~ ^2 ]]; then
+    log info "Notified API that $original is processed"
+  else
+    log warn "Pipeline API returned $http_code for $original: $(tr -d '\r' < "$tmp")"
+  fi
+  rm -f "$tmp"
+}
+
 run_cmd() {
   if [[ "$DRY_RUN" == true ]]; then
     log debug "(dry-run) $*"
@@ -138,7 +197,7 @@ sync_from_remote() {
     return
   fi
   log info "Syncing uploads from $REMOTE_SSH:$REMOTE_UPLOAD_ROOT"
-  local args=("-av" "--partial" "--prune-empty-dirs" "--exclude" "processed/" "--exclude" "*.${REMOTE_DONE_SUFFIX#.}")
+  local args=("-av" "--partial" "--prune-empty-dirs" "--exclude" "processed/" "--exclude" "avatars/" "--exclude" "*.${REMOTE_DONE_SUFFIX#.}")
   if [[ "$DRY_RUN" == true ]]; then
     args+=("--dry-run")
   fi
@@ -194,7 +253,15 @@ upload_derivatives() {
 
   local rsync_src="$output_dir/"
   local rsync_dest="${REMOTE_SSH}:${remote_target}/"
-  local rsync_args=("-av" "--partial" "--include" "*.mp4" "--include" "*.webm" "--include" "*.manifest.json" "--include" "*${REMOTE_DONE_SUFFIX}" "--exclude" "*")
+  local rsync_args=(
+    "-av"
+    "--partial"
+    "--include=*.mp4"
+    "--include=*.webm"
+    "--include=*.manifest.json"
+    "--include=*${REMOTE_DONE_SUFFIX}"
+    "--exclude=*"
+  )
   if [[ "$DRY_RUN" == true ]]; then
     rsync_args+=("--dry-run")
   fi
@@ -223,6 +290,28 @@ transcode_file() {
     log debug "Skipping marker file $src"
     return 0
   fi
+
+  local ext
+  ext="${src##*.}"
+  if [[ "$ext" == "$src" ]]; then
+    ext=""
+  else
+    ext="${ext,,}"
+  fi
+  case "$ext" in
+    mp4|mov|m4v|webm|mkv|mpg|mpeg|avi)
+      ;;
+    "")
+      log info "Skipping file without extension: $rel"
+      mark_state "$rel"
+      return 0
+      ;;
+    *)
+      log info "Skipping unsupported file type ($ext): $rel"
+      mark_state "$rel"
+      return 0
+      ;;
+  esac
 
   local rel_dir="$(dirname "$rel")"
   local rel_dir_clean
@@ -336,6 +425,7 @@ JSON
 
   mark_state "$rel"
   run_cmd touch "$output_dir/${stem}${REMOTE_DONE_SUFFIX}"
+  notify_pipeline "$(basename "$src")" "$remote_rel_manifest" "$remote_rel_mp4" "$remote_rel_webm"
   return 0
 }
 

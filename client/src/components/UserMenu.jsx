@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import AvatarImage from './AvatarImage';
 
 export default function UserMenu({ user }) {
   const [open, setOpen] = useState(false);
@@ -19,17 +20,21 @@ export default function UserMenu({ user }) {
     return null;
   }
 
-  const avatarUrl = user.avatar
-    ? `/uploads/avatars/${user.avatar}`
-    : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=random&color=fff`;
-
   return (
     <div className="relative" ref={menuRef}>
       <button
         className="w-10 h-10 rounded-full bg-gold flex items-center justify-center text-sm overflow-hidden border-2 border-gold"
         onClick={() => setOpen(!open)}
       >
-        <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+        {user.avatar ? (
+          <AvatarImage filename={user.avatar} alt="avatar" className="w-full h-full object-cover" />
+        ) : (
+          <img
+            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=random&color=fff`}
+            alt="avatar"
+            className="w-full h-full object-cover"
+          />
+        )}
       </button>
       {open && (
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 text-gray-800">

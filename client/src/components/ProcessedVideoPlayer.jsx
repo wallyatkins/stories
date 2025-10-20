@@ -21,7 +21,11 @@ function stripExtension(path) {
   return path;
 }
 
-function buildManifestUrl(filename) {
+function buildManifestUrl(filename, manifestPath) {
+  if (manifestPath) {
+    const cleaned = stripLeadingSlash(manifestPath);
+    return `/uploads/processed/${encodeSegments(cleaned)}`;
+  }
   const clean = stripLeadingSlash(filename);
   const manifestRelative = `${stripExtension(clean)}.manifest.json`;
   return `/uploads/processed/${encodeSegments(manifestRelative)}`;
@@ -40,7 +44,7 @@ function variantToSource(variant) {
   return null;
 }
 
-export default function ProcessedVideoPlayer({ filename, autoPlay = false, className = '', controls = true }) {
+export default function ProcessedVideoPlayer({ filename, manifestPath = '', autoPlay = false, className = '', controls = true }) {
   const [sources, setSources] = useState(null);
   const [loading, setLoading] = useState(true);
   const [usingFallback, setUsingFallback] = useState(false);
@@ -55,7 +59,7 @@ export default function ProcessedVideoPlayer({ filename, autoPlay = false, class
     async function load() {
       setLoading(true);
       setUsingFallback(false);
-      const manifestUrl = buildManifestUrl(filename);
+      const manifestUrl = buildManifestUrl(filename, manifestPath);
       try {
         const res = await fetch(manifestUrl, { cache: 'no-store' });
         if (!res.ok) throw new Error(`Manifest not found at ${manifestUrl}`);
@@ -83,7 +87,7 @@ export default function ProcessedVideoPlayer({ filename, autoPlay = false, class
     return () => {
       cancelled = true;
     };
-  }, [filename, fallbackUrl]);
+  }, [filename, manifestPath, fallbackUrl]);
 
   return (
     <div className={`w-full ${className}`}>
