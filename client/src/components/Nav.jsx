@@ -10,7 +10,9 @@ export default function Nav() {
       .then(res => res.json())
       .then(data => {
         setUser(data.user || null);
-        setLoading(false);
+      })
+      .catch((error) => {
+        console.error('Failed to load user for nav:', error);
       });
   }, []);
 
@@ -37,4 +39,3 @@ export default function Nav() {
     </nav>
   );
 }
-
