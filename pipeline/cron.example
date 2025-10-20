@@ -1,0 +1,6 @@
+# Example cron entry for the out-of-band pipeline.
+# Adjust PATH, working directory, and cadence to match your environment.
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+
+*/10 * * * * /opt/stories-pipeline/process_videos.sh >> /opt/stories-pipeline/logs/pipeline.log 2>&1

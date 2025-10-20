@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import VideoRecorder from '../components/VideoRecorder';
+import { extensionForMimeType, filenameWithExtension } from '../utils/video';
 
 export default function RecordResponse() {
   const { promptId } = useParams();
@@ -38,7 +39,9 @@ export default function RecordResponse() {
     if (!recordedBlob || !prompt) return;
     setUploading(true);
     const formData = new FormData();
-    formData.append('video', recordedBlob, 'response.mp4');
+    const extension = extensionForMimeType(recordedBlob.type);
+    const filename = filenameWithExtension('response', extension);
+    formData.append('video', recordedBlob, filename);
     formData.append('prompt_id', prompt.id);
     
     await fetch('/api/upload_response.php', {

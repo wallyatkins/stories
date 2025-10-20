@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import VideoRecorder from './VideoRecorder';
+import { extensionForMimeType, filenameWithExtension } from '../utils/video';
 
 export default function PromptRecorder({ friend, onFinish }) {
   const [uploading, setUploading] = useState(false);
   async function handleRecorded(blob /*, url */) {
     setUploading(true);
     const formData = new FormData();
-    formData.append('video', blob, 'prompt.mp4');
+    const extension = extensionForMimeType(blob.type);
+    const filename = filenameWithExtension('prompt', extension);
+    formData.append('video', blob, filename);
     formData.append('friend_id', friend.id);
     const res = await fetch('/api/upload_prompt', {
       method: 'POST',

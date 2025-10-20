@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import VideoRecorder from '../components/VideoRecorder';
+import { extensionForMimeType, filenameWithExtension } from '../utils/video';
 
 export default function RecordPrompt() {
   const { friendId } = useParams();
@@ -31,7 +32,9 @@ export default function RecordPrompt() {
     if (!recordedBlob || !friend) return;
     setUploading(true);
     const formData = new FormData();
-    formData.append('video', recordedBlob, 'prompt.mp4');
+    const extension = extensionForMimeType(recordedBlob.type);
+    const filename = filenameWithExtension('prompt', extension);
+    formData.append('video', recordedBlob, filename);
     formData.append('friend_id', friend.id);
     await fetch('/api/upload_prompt', {
       method: 'POST',

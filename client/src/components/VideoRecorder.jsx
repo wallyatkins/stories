@@ -1,29 +1,45 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile, toBlobURL } from '@ffmpeg/util';
 
 export default function VideoRecorder({ onRecorded }) {
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
-  const ffmpegRef = useRef(new FFmpeg());
   const [recording, setRecording] = useState(false);
   const [recordedUrl, setRecordedUrl] = useState(null);
   const [message, setMessage] = useState('Click the red button to start recording');
+  const [error, setError] = useState('');
+
+  const mimeCandidates = [
+    'video/webm;codecs=vp9,opus',
+    'video/webm;codecs=vp8,opus',
+    'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+    'video/webm',
+  ];
+
+  const chosenMimeType = mimeCandidates.find((type) => {
+    if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) {
+      return false;
+    }
+    return MediaRecorder.isTypeSupported(type);
+  }) || '';
 
   // start camera preview when component mounts
   useEffect(() => {
     async function init() {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      streamRef.current = stream;
-      videoRef.current.srcObject = stream;
-      videoRef.current.src = '';
-      videoRef.current.muted = true;
-      setMessage('Loading video tools...');
-      const ffmpeg = ffmpegRef.current;
-      await ffmpeg.load();
-      setMessage('Click the red button to start recording');
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        streamRef.current = stream;
+        videoRef.current.srcObject = stream;
+        videoRef.current.src = '';
+        videoRef.current.muted = true;
+        setMessage('Click the red button to start recording');
+        setError('');
+      } catch (err) {
+        console.error('Failed to start camera', err);
+        setMessage('Unable to access your camera and microphone');
+        setError('Check browser permissions and try again.');
+      }
     }
     init();
     return () => {
@@ -42,32 +58,28 @@ export default function VideoRecorder({ onRecorded }) {
       URL.revokeObjectURL(recordedUrl);
       setRecordedUrl(null);
     }
-    const preferredMime = 'video/webm';
-    mediaRecorderRef.current = new MediaRecorder(streamRef.current, { mimeType: preferredMime });
+    const options = chosenMimeType ? { mimeType: chosenMimeType } : undefined;
+    try {
+      mediaRecorderRef.current = new MediaRecorder(streamRef.current, options);
+    } catch (err) {
+      console.error('Failed to create MediaRecorder', err);
+      setMessage('Recording not supported in this browser.');
+      setError('Try updating your browser or using a different one.');
+      return;
+    }
     mediaRecorderRef.current.ondataavailable = (e) => chunksRef.current.push(e.data);
     mediaRecorderRef.current.onstop = async () => {
-      const mimeType = chunksRef.current[0]?.type || mediaRecorderRef.current.mimeType || preferredMime;
+      const mimeType = chunksRef.current[0]?.type || mediaRecorderRef.current.mimeType || chosenMimeType || 'video/webm';
       const blob = new Blob(chunksRef.current, { type: mimeType });
       chunksRef.current = [];
 
-      setMessage('Transcoding video to MP4...');
-      const ffmpeg = ffmpegRef.current;
-      const inputFileName = 'input.webm';
-      const outputFileName = 'output.mp4';
-      await ffmpeg.writeFile(inputFileName, await fetchFile(blob));
-      await ffmpeg.exec(['-i', inputFileName, '-c:v', 'libx264', '-preset', 'ultrafast', '-c:a', 'aac', outputFileName]);
-      const data = await ffmpeg.readFile(outputFileName);
-      const newBlob = new Blob([data.buffer], { type: 'video/mp4' });
-      await ffmpeg.deleteFile(inputFileName);
-      await ffmpeg.deleteFile(outputFileName);
-
-      const url = URL.createObjectURL(newBlob);
+      const url = URL.createObjectURL(blob);
       setRecordedUrl(url);
       videoRef.current.srcObject = null;
       videoRef.current.src = url;
       videoRef.current.muted = false;
-      setMessage('Transcoding complete. You can now play the video.');
-      if (onRecorded) onRecorded(newBlob, url);
+      setMessage('Recording complete. You can now play the video.');
+      if (onRecorded) onRecorded(blob, url);
     };
     mediaRecorderRef.current.start();
     setRecording(true);
@@ -93,12 +105,13 @@ export default function VideoRecorder({ onRecorded }) {
       />
       <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white p-2 rounded">
         {message}
+        {error && <span className="block text-xs text-red-300 mt-1">{error}</span>}
       </div>
       {!recordedUrl && (
         <button
           className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center justify-center"
           onClick={recording ? stopRecording : startRecording}
-          disabled={message.includes('Loading') || message.includes('Processing') || message.includes('Transcoding')}
+          disabled={message.includes('Processing') || message.includes('Unable')}
         >
           {recording ? (
             <span className="block rounded-full border-4 border-red-600 w-16 h-16 flex items-center justify-center">

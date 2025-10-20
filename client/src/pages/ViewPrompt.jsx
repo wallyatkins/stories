@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import ProcessedVideoPlayer from '../components/ProcessedVideoPlayer';
 
 export default function ViewPrompt() {
   const { promptId } = useParams();
@@ -73,16 +74,13 @@ export default function ViewPrompt() {
     );
   }
 
-  const videoSrc = `/api/video.php?file=${prompt.filename}`;
-
   return (
     <div className="container mx-auto p-4 flex flex-col items-center">
       <div className="w-full max-w-4xl">
-        <video
-          src={videoSrc}
-          controls
+        <ProcessedVideoPlayer
+          filename={prompt.filename}
           autoPlay
-          className="w-full rounded-lg shadow-xl mb-4"
+          className="rounded-lg shadow-xl mb-4"
         />
         <div className="flex justify-between items-center">
           <button
