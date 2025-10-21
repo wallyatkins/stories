@@ -1,24 +1,39 @@
 import React, { useEffect, useState } from 'react';
 import VideoRecorder from './VideoRecorder';
 import ProcessedVideoPlayer from './ProcessedVideoPlayer';
+import UploadProgress from './UploadProgress';
 import { extensionForMimeType, filenameWithExtension } from '../utils/video';
+import { uploadWithProgress } from '../utils/uploadWithProgress';
 
 export default function ResponseRecorder({ promptId }) {
   const [responses, setResponses] = useState([]);
   const [loadingResponses, setLoadingResponses] = useState(true);
   const [prompt, setPrompt] = useState(null);
   const [loadingPrompt, setLoadingPrompt] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(null);
 
   async function handleRecorded(blob /*, url */) {
     const extension = extensionForMimeType(blob.type);
     const filename = filenameWithExtension('response', extension);
     const formData = new FormData();
     formData.append('video', blob, filename);
-    await fetch(`/api/upload_response?prompt=${promptId}`, {
-      method: 'POST',
-      body: formData,
-    });
-    loadResponses();
+    setUploading(true);
+    setProgress({ loaded: 0, total: null, percent: 0, bytesPerSecond: 0 });
+    try {
+      await uploadWithProgress({
+        url: `/api/upload_response?prompt=${promptId}`,
+        formData,
+        onProgress: setProgress,
+      });
+      await loadResponses();
+    } catch (error) {
+      console.error('Failed to upload response', error);
+      alert('Upload failed. Please try again.');
+    } finally {
+      setUploading(false);
+      setProgress(null);
+    }
   }
 
   async function loadResponses() {
@@ -77,7 +92,13 @@ export default function ResponseRecorder({ promptId }) {
           Prompt video unavailable. It may still be processing.
         </div>
       )}
-      <VideoRecorder onRecorded={handleRecorded} />
+      {uploading ? (
+        <div className="my-4 flex items-center justify-center">
+          <UploadProgress progress={progress} />
+        </div>
+      ) : (
+        <VideoRecorder onRecorded={handleRecorded} />
+      )}
       <h3 className="text-lg mt-4 mb-2">Responses</h3>
       {loadingResponses ? (
         <div className="flex justify-center items-center h-24">

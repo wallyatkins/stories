@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import VideoRecorder from '../components/VideoRecorder';
+import UploadProgress from '../components/UploadProgress';
 import { extensionForMimeType, filenameWithExtension } from '../utils/video';
+import { uploadWithProgress } from '../utils/uploadWithProgress';
 
 export default function RecordPrompt() {
   const { friendId } = useParams();
@@ -11,6 +13,7 @@ export default function RecordPrompt() {
   const [recordedBlob, setRecordedBlob] = useState(null);
   const [recordedUrl, setRecordedUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(null);
 
   useEffect(() => {
     if (!friend) {
@@ -31,17 +34,26 @@ export default function RecordPrompt() {
   async function sendVideo() {
     if (!recordedBlob || !friend) return;
     setUploading(true);
+    setProgress({ loaded: 0, total: null, percent: 0, bytesPerSecond: 0 });
     const formData = new FormData();
     const extension = extensionForMimeType(recordedBlob.type);
     const filename = filenameWithExtension('prompt', extension);
     formData.append('video', recordedBlob, filename);
     formData.append('friend_id', friend.id);
-    await fetch('/api/upload_prompt', {
-      method: 'POST',
-      body: formData,
-    });
-    setUploading(false);
-    navigate('/prompts');
+    try {
+      await uploadWithProgress({
+        url: '/api/upload_prompt',
+        formData,
+        onProgress: setProgress,
+      });
+      navigate('/prompts');
+    } catch (error) {
+      console.error('Failed to upload prompt video', error);
+      alert('Upload failed. Please try sending your video again.');
+    } finally {
+      setUploading(false);
+      setProgress(null);
+    }
   }
 
   function discard() {
@@ -61,7 +73,10 @@ export default function RecordPrompt() {
   return (
     <div className="fixed inset-0 bg-black flex flex-col items-center justify-center">
       {uploading ? (
-        <div className="text-white">Uploading...</div>
+        <div className="flex flex-col items-center gap-4 text-white">
+          <UploadProgress progress={progress} />
+          <p className="text-sm text-gray-300">Please keep this page open until the upload finishes.</p>
+        </div>
       ) : recordedBlob ? (
         <div className="w-full h-full relative flex flex-col">
           <video src={recordedUrl} controls className="flex-1 bg-black object-contain" />
