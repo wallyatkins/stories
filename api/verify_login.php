@@ -12,23 +12,25 @@ $GLOBALS['logger']->info('Login verification attempt.', ['token' => $token]);
 $tokenFile = __DIR__ . '/../metadata/tokens/' . basename($token) . '.json';
 if ($token !== '' && file_exists($tokenFile)) {
     $data = json_decode(file_get_contents($tokenFile), true);
-    $email = $data['email'] ?? '';
+    $rawEmail = $data['email'] ?? '';
+    $email = normalize_email($rawEmail);
+    $trustDevice = !empty($data['trust_device']);
     $created = $data['ts'] ?? 0;
     $expired = (time() - $created) > 900; // 15 minutes
     unlink($tokenFile);
-    if ($expired) {
-        $GLOBALS['logger']->warning('Login verification failed: Expired token', ['email' => $email]);
-        header('Content-Type: text/html; charset=UTF-8');
-        echo '<!DOCTYPE html><html><body>';
-        echo '<p>Login link expired. Request a new link below.</p>';
-        echo '<form method="post" action="/api/request_login">';
-        echo '<input type="email" name="email" required placeholder="Email" />';
-        echo '<button type="submit">Send Login Link</button>';
-        echo '</form></body></html>';
+    if ($email === '') {
+        $GLOBALS['logger']->warning('Login verification failed: Token missing email');
+        header('Location: /');
         exit;
     }
 
-    $GLOBALS['logger']->info('Login token validated.', ['email' => $email]);
+    if ($expired) {
+        $GLOBALS['logger']->warning('Login verification failed: Expired token', ['email' => $email, 'token_email' => $rawEmail]);
+        header('Location: /');
+        exit;
+    }
+
+    $GLOBALS['logger']->info('Login token validated.', ['email' => $email, 'token_email' => $rawEmail, 'trust_device' => $trustDevice]);
 
     $pdo = db();
     $stmt = $pdo->prepare('SELECT id, email, username, avatar FROM users WHERE email = ?');
@@ -42,6 +44,11 @@ if ($token !== '' && file_exists($tokenFile)) {
     }
 
     $_SESSION['user'] = $user;
+    if ($trustDevice) {
+        set_trusted_device_cookie($user);
+    } else {
+        clear_trusted_device_cookie();
+    }
     $GLOBALS['logger']->info('Login successful', ['user_id' => $user['id'], 'email' => $user['email']]);
     $redirect = '/contacts';
     if ($responseFilename !== '') {
@@ -54,6 +61,5 @@ if ($token !== '' && file_exists($tokenFile)) {
 }
 
 $GLOBALS['logger']->warning('Login verification failed: Invalid or missing token');
-header('Content-Type: text/plain');
-http_response_code(400);
-echo 'Invalid or expired token';
+header('Location: /');
+exit;

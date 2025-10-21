@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Profile from '../components/Profile';
 
 export default function ProfilePage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetch('/api/check_login')
@@ -16,6 +18,7 @@ export default function ProfilePage() {
 
   function handleUpdated(u) {
     setUser(u);
+    navigate('/contacts', { replace: true });
   }
 
   if (loading) return null;

@@ -6,19 +6,21 @@ require_once __DIR__ . '/db.php';
 start_session();
 header('Content-Type: application/json');
 
-$email = $_POST['email'] ?? '';
-$GLOBALS['logger']->info('Login request received', ['email' => $email]);
+$rawEmail = $_POST['email'] ?? '';
+$email = normalize_email($rawEmail);
+$trustDevice = ($_POST['trust_device'] ?? '') === '1';
+$GLOBALS['logger']->info('Login request received', ['email' => $rawEmail, 'normalized_email' => $email, 'trust_device' => $trustDevice]);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    $GLOBALS['logger']->warning('Login request rejected: Not a POST request', ['email' => $email]);
+    $GLOBALS['logger']->warning('Login request rejected: Not a POST request', ['email' => $rawEmail, 'normalized_email' => $email]);
     echo json_encode(['error' => 'POST required']);
     exit;
 }
 
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+if (!filter_var($rawEmail, FILTER_VALIDATE_EMAIL)) {
     http_response_code(400);
-    $GLOBALS['logger']->warning('Login request failed: Invalid email provided', ['email' => $email]);
+    $GLOBALS['logger']->warning('Login request failed: Invalid email provided', ['email' => $rawEmail]);
     echo json_encode(['error' => 'Invalid email']);
     exit;
 }
@@ -30,7 +32,7 @@ $stmt->execute([$email]);
 $userId = $stmt->fetchColumn();
 if (!$userId) {
     http_response_code(400);
-    $GLOBALS['logger']->warning('Login request failed: Unrecognized email', ['email' => $email]);
+    $GLOBALS['logger']->warning('Login request failed: Unrecognized email', ['email' => $rawEmail, 'normalized_email' => $email]);
     echo json_encode(['error' => 'Email not recognized']);
     exit;
 }
@@ -41,9 +43,13 @@ $tokenDir = __DIR__ . '/../metadata/tokens';
 if (!is_dir($tokenDir)) {
     mkdir($tokenDir, 0777, true);
 }
-$tokenData = ['email' => $email, 'ts' => time()];
+$tokenData = [
+    'email' => $email,
+    'ts' => time(),
+    'trust_device' => $trustDevice,
+];
 file_put_contents("$tokenDir/$token.json", json_encode($tokenData));
-$GLOBALS['logger']->info('Login token created', ['email' => $email]);
+$GLOBALS['logger']->info('Login token created', ['email' => $email, 'submitted_email' => $rawEmail]);
 if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
     $link = 'https://' . $_SERVER['HTTP_HOST'] . '/verify-login/' . $token;
 } else {
@@ -70,19 +76,19 @@ try {
             $mail->SMTPSecure = $config['email']['smtp']['secure'];
         }
         $mail->setFrom($config['email']['from']);
-        $mail->addAddress($email);
+        $mail->addAddress($rawEmail);
         $mail->Subject = $subject;
         $mail->Body = $message;
         $mail->send();
     } else {
         $headers = 'From: ' . $config['email']['from'] . "\r\n";
-        if (!@mail($email, $subject, $message, $headers)) {
+        if (!@mail($rawEmail, $subject, $message, $headers)) {
             throw new Exception('mail() function failed');
         }
     }
-    $GLOBALS['logger']->info('Login email sent successfully', ['email' => $email]);
+    $GLOBALS['logger']->info('Login email sent successfully', ['email' => $email, 'recipient_email' => $rawEmail]);
 } catch (Exception $e) {
-    $GLOBALS['logger']->error('Failed to send login email', ['email' => $email, 'error' => $e->getMessage()]);
+    $GLOBALS['logger']->error('Failed to send login email', ['email' => $email, 'recipient_email' => $rawEmail, 'error' => $e->getMessage()]);
     http_response_code(500);
     echo json_encode(['error' => 'Failed to send login email.']);
     exit;

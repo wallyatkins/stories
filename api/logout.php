@@ -20,6 +20,6 @@ if (ini_get('session.use_cookies')) {
     );
 }
 session_destroy();
+clear_trusted_device_cookie();
 header('Content-Type: application/json');
 echo json_encode(['loggedOut' => true]);
-
