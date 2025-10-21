@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import VideoRecorder from '../components/VideoRecorder';
-import UploadProgress from '../components/UploadProgress';
+import UploadProgress from '../components/UploadProgress.jsx';
 import { extensionForMimeType, filenameWithExtension } from '../utils/video';
 import { uploadWithProgress } from '../utils/uploadWithProgress';
 

@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import ReactPlayer from 'react-player';
 
 function encodeSegments(path) {
   return path
@@ -31,27 +30,40 @@ function buildManifestUrl(filename, manifestPath) {
   return `/uploads/processed/${encodeSegments(manifestRelative)}`;
 }
 
+function guessMimeType(url = '') {
+  const lower = url.toLowerCase();
+  if (lower.endsWith('.mp4')) return 'video/mp4';
+  if (lower.endsWith('.webm')) return 'video/webm';
+  if (lower.endsWith('.mov')) return 'video/quicktime';
+  return 'video/mp4';
+}
+
 function variantToSource(variant) {
   if (!variant) return null;
-  if (variant.url) return { src: variant.url, type: variant.type };
+  if (variant.url) {
+    return { src: variant.url, type: variant.type || guessMimeType(variant.url) };
+  }
   if (variant.path) {
     const encoded = encodeSegments(variant.path.replace(/^\/+/, ''));
+    const src = `/uploads/processed/${encoded}`;
     return {
-      src: `/uploads/processed/${encoded}`,
-      type: variant.type,
+      src,
+      type: variant.type || guessMimeType(src),
     };
   }
   return null;
 }
 
 export default function ProcessedVideoPlayer({ filename, manifestPath = '', autoPlay = false, className = '', controls = true }) {
-  const [sources, setSources] = useState(null);
+  const [sources, setSources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [usingFallback, setUsingFallback] = useState(false);
+  const [error, setError] = useState('');
 
-  const fallbackUrl = useMemo(() => {
+  const fallbackSource = useMemo(() => {
     const clean = stripLeadingSlash(filename);
-    return `/uploads/${encodeSegments(clean)}`;
+    const src = `/uploads/${encodeSegments(clean)}`;
+    return { src, type: guessMimeType(src) };
   }, [filename]);
 
   useEffect(() => {
@@ -59,6 +71,7 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
     async function load() {
       setLoading(true);
       setUsingFallback(false);
+      setError('');
       const manifestUrl = buildManifestUrl(filename, manifestPath);
       try {
         const res = await fetch(manifestUrl, { cache: 'no-store' });
@@ -69,13 +82,13 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
           .filter(Boolean);
         if (!urls.length) throw new Error('Manifest missing variants');
         if (!cancelled) {
-          setSources(urls.length === 1 ? urls[0] : urls);
+          setSources(urls);
         }
-      } catch (error) {
-        console.warn('Falling back to original upload', error);
+      } catch (err) {
+        console.warn('Falling back to original upload', err);
         if (!cancelled) {
           setUsingFallback(true);
-          setSources(fallbackUrl);
+          setSources([fallbackSource]);
         }
       } finally {
         if (!cancelled) {
@@ -87,24 +100,34 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
     return () => {
       cancelled = true;
     };
-  }, [filename, manifestPath, fallbackUrl]);
+  }, [filename, manifestPath, fallbackSource]);
+
+  const videoKey = `${usingFallback ? 'fallback' : 'processed'}-${filename}`;
 
   return (
     <div className={`w-full ${className}`}>
       <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75 text-white">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white" />
+            <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-white" />
           </div>
         ) : (
-          <ReactPlayer
-            url={sources}
-            playing={autoPlay}
+          <video
+            key={videoKey}
+            className="absolute inset-0 h-full w-full bg-black"
             controls={controls}
-            width="100%"
-            height="100%"
-            style={{ position: 'absolute', top: 0, left: 0 }}
-          />
+            autoPlay={autoPlay}
+            playsInline
+            preload="metadata"
+            muted={autoPlay}
+            onPlay={() => setError('')}
+            onError={() => setError('We could not play this video. Try refreshing the page.')}
+          >
+            {sources.map((source) => (
+              <source key={source.src} src={source.src} type={source.type} />
+            ))}
+            Your browser does not support the video tag.
+          </video>
         )}
       </div>
       {usingFallback && (
@@ -112,6 +135,7 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
           Processed versions are not ready yet; playing the original upload instead.
         </p>
       )}
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
     </div>
   );
 }

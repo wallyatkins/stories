@@ -9,9 +9,8 @@
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-player": "^2.12.0",
-    "react-router-dom": "^6.30.1",
-    "react-easy-crop": "^5.0.7"
+    "react-easy-crop": "^5.0.7",
+    "react-router-dom": "^6.30.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.6.0",

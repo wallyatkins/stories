@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import VideoRecorder from './VideoRecorder';
-import UploadProgress from './UploadProgress';
+import UploadProgress from './UploadProgress.jsx';
 import { extensionForMimeType, filenameWithExtension } from '../utils/video';
 import { uploadWithProgress } from '../utils/uploadWithProgress';
 
