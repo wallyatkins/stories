@@ -33,26 +33,26 @@ export default function LoginForm() {
 
   return (
     <div>
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="space-x-2">
+      <form onSubmit={handleSubmit} className="flex flex-col items-center space-y-3">
+        <div className="flex flex-col items-center gap-2 sm:flex-row">
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="border px-2 py-1"
+            className="border px-3 py-2 sm:w-64"
             placeholder="Email"
             disabled={loading}
           />
           <button
-            className="bg-blue-500 text-white px-4 py-1 rounded"
+            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:opacity-60"
             type="submit"
             disabled={loading}
           >
             {loading ? 'Sending...' : 'Send Login Link'}
           </button>
         </div>
-        <label className="flex items-center space-x-2 text-sm text-gray-700">
+        <label className="flex items-center justify-center gap-2 text-sm text-gray-700">
           <input
             type="checkbox"
             checked={trustDevice}
