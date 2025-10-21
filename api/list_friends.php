@@ -12,7 +12,17 @@ header('Content-Type: application/json');
 
 $GLOBALS['logger']->info('Listing friends for user.', ['user_id' => $user['id'], 'email' => $user['email']]);
 
-$stmt = $pdo->prepare('SELECT u.id, u.email, u.username, u.avatar FROM friends f JOIN users u ON f.friend_user_id = u.id WHERE f.user_id = ?');
+$stmt = $pdo->prepare(
+    'SELECT u.id,
+            u.email,
+            u.username,
+            u.avatar,
+            COALESCE((SELECT COUNT(*) FROM prompts p WHERE p.user_id = f.user_id AND p.friend_id = u.id), 0) AS prompts_sent,
+            COALESCE((SELECT COUNT(*) FROM prompts p WHERE p.user_id = u.id AND p.friend_id = f.user_id), 0) AS prompts_received
+     FROM friends f
+     JOIN users u ON f.friend_user_id = u.id
+     WHERE f.user_id = ?'
+);
 $stmt->execute([$user['id']]);
 $friends = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
