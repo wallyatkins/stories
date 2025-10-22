@@ -104,11 +104,14 @@ export default function Profile({ user, onUpdated, onClose }) {
   }, [avatar, onUpdated, username]);
 
   return (
-    <div className="mb-4 rounded border p-4">
-      <h2 className="text-xl font-semibold">Profile</h2>
-      <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-        <div className="flex items-center space-x-4">
-          <div className="h-24 w-24 overflow-hidden rounded-full bg-gray-200">
+    <div className="bubble-card bubble-accent mb-4">
+      <div className="bubble-content">
+        <h2 className="text-xl font-semibold text-nav-bg">Profile</h2>
+        <p className="text-sm text-gray-600">Refresh your name and avatar so your friends recognize your prompts instantly.</p>
+      </div>
+      <form onSubmit={handleSubmit} className="bubble-content mt-6 space-y-6">
+        <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
+          <div className="relative h-24 w-24 overflow-hidden rounded-full border border-white/60 bg-gradient-to-br from-coral/20 via-white to-teal/20 shadow-inner">
             {avatarPreview ? (
               <img src={avatarPreview} alt="Avatar preview" className="h-full w-full object-cover" />
             ) : user.avatar ? (
@@ -129,14 +132,14 @@ export default function Profile({ user, onUpdated, onClose }) {
                 onChange={handleFileSelect}
                 className="hidden"
               />
-              <span className="inline-flex cursor-pointer items-center rounded border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+              <span className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-coral/40 bg-white/80 px-4 py-2 text-sm font-semibold text-coral shadow-md transition hover:-translate-y-0.5 hover:border-coral hover:bg-coral/10">
                 Change avatar
               </span>
             </label>
             {avatarPreview && (
               <button
                 type="button"
-                className="text-sm text-gray-600 underline"
+                className="text-sm font-medium text-gray-500 underline"
                 onClick={() => {
                   setAvatar(null);
                   setAvatarPreview((prev) => {
@@ -158,19 +161,19 @@ export default function Profile({ user, onUpdated, onClose }) {
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="w-full rounded border px-3 py-2"
+            className="w-full rounded-full border border-white/60 bg-white/80 px-4 py-2 shadow-inner focus:border-teal focus:ring-2 focus:ring-teal/40"
           />
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-3">
           <button
             type="submit"
-            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:opacity-60"
+            className="btn-prompt disabled:opacity-60 disabled:saturate-75"
             disabled={saving}
           >
             {saving ? 'Saving…' : 'Save changes'}
           </button>
-          <button type="button" onClick={onClose} className="rounded border px-4 py-2">
+          <button type="button" onClick={onClose} className="btn-secondary">
             Cancel
           </button>
         </div>

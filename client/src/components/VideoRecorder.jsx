@@ -101,7 +101,7 @@ export default function VideoRecorder({ onRecorded }) {
         autoPlay
         playsInline
         controls={!!recordedUrl}
-        className={`w-full mb-2 ${!recordedUrl ? 'transform -scale-x-100' : ''}`}
+        className="w-full mb-2 transform -scale-x-100"
       />
       <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white p-2 rounded">
         {message}

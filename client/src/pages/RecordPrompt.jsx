@@ -78,8 +78,12 @@ export default function RecordPrompt() {
           <p className="text-sm text-gray-300">Please keep this page open until the upload finishes.</p>
         </div>
       ) : recordedBlob ? (
-        <div className="w-full h-full relative flex flex-col">
-          <video src={recordedUrl} controls className="flex-1 bg-black object-contain" />
+        <div className="relative flex h-full w-full flex-col">
+          <video
+            src={recordedUrl}
+            controls
+            className="flex-1 bg-black object-contain transform -scale-x-100"
+          />
           <div className="absolute bottom-24 left-0 right-0 flex justify-center space-x-8">
             <button onClick={discard} className="flex flex-col items-center">
               <span className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center text-white text-xl">🗑️</span>

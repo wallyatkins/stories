@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Profile from '../components/Profile';
+import { useAuthGuard } from '../hooks/useAuthGuard';
 
 export default function ProfilePage() {
+  useAuthGuard();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();

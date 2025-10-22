@@ -32,27 +32,27 @@ export default function LoginForm() {
   }
 
   return (
-    <div>
+    <div className="w-full">
       <form onSubmit={handleSubmit} className="flex flex-col items-center space-y-3">
-        <div className="flex flex-col items-center gap-2 sm:flex-row">
+        <div className="flex w-full flex-col items-center gap-3 sm:flex-row">
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="border px-3 py-2 sm:w-64"
+            className="w-full rounded-full border border-white/50 bg-white/80 px-4 py-2 shadow-inner transition focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/40 sm:w-64"
             placeholder="Email"
             disabled={loading}
           />
           <button
-            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:opacity-60"
+            className="btn-prompt w-full sm:w-auto disabled:opacity-60"
             type="submit"
             disabled={loading}
           >
             {loading ? 'Sending...' : 'Send Login Link'}
           </button>
         </div>
-        <label className="flex items-center justify-center gap-2 text-sm text-gray-700">
+        <label className="flex items-center justify-center gap-2 text-xs font-medium uppercase tracking-[0.25em] text-gray-600">
           <input
             type="checkbox"
             checked={trustDevice}
@@ -62,7 +62,7 @@ export default function LoginForm() {
           <span>Trust this device for 30 days</span>
         </label>
       </form>
-      {error && <p className="text-red-600 mt-2">{error}</p>}
+      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
     </div>
   );
 }
