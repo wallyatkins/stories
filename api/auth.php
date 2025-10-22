@@ -23,7 +23,10 @@ function start_session() {
 function require_login() {
     start_session();
     if (!isset($_SESSION['user'])) {
-        $GLOBALS['logger']->warning('Authentication required, but user not logged in.');
+        $GLOBALS['logger']->notice('Authentication required, but user not logged in.', [
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            'path' => $_SERVER['REQUEST_URI'] ?? '',
+        ]);
         http_response_code(401);
         echo json_encode(['error' => 'Authentication required']);
         exit;
@@ -187,7 +190,10 @@ function attempt_trusted_login(): void {
     if (!hash_equals($expectedHash, $actualHash)) {
         $pdo->prepare('DELETE FROM remember_tokens WHERE id = ?')->execute([$token['id']]);
         clear_trusted_device_cookie();
-        $GLOBALS['logger']->warning('Trusted device token mismatch detected.', ['selector' => $selector]);
+        $GLOBALS['logger']->notice('Trusted device token mismatch detected.', [
+            'selector' => $selector,
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+        ]);
         return;
     }
 

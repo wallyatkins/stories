@@ -55,13 +55,31 @@ require_login();
 header('Content-Type: application/json');
 
 $user = $_SESSION['user'];
-$prompt = basename($_GET['prompt'] ?? '');
 
-$GLOBALS['logger']->info('Response upload request.', ['user_id' => $user['id'], 'email' => $user['email'], 'prompt' => $prompt]);
+$promptIdFromPost = isset($_POST['prompt_id']) ? (int)$_POST['prompt_id'] : 0;
+$promptFilename = basename($_GET['prompt'] ?? '');
 
-if ($prompt === '' || $_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_FILES['video'])) {
+if ($promptIdFromPost > 0) {
+    $promptIdentifier = ['type' => 'id', 'value' => $promptIdFromPost];
+} elseif ($promptFilename !== '') {
+    $promptIdentifier = ['type' => 'filename', 'value' => $promptFilename];
+} else {
+    $promptIdentifier = null;
+}
+
+$GLOBALS['logger']->info('Response upload request.', [
+    'user_id' => $user['id'],
+    'email' => $user['email'],
+    'prompt_identifier' => $promptIdentifier,
+]);
+
+if ($promptIdentifier === null || $_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_FILES['video'])) {
     http_response_code(400);
-    $GLOBALS['logger']->warning('Response upload failed: Invalid request.', ['user_id' => $user['id'], 'email' => $user['email'], 'prompt' => $prompt]);
+    $GLOBALS['logger']->warning('Response upload failed: Invalid request.', [
+        'user_id' => $user['id'],
+        'email' => $user['email'],
+        'prompt_identifier' => $promptIdentifier,
+    ]);
     echo json_encode(['error' => 'Invalid request']);
     exit;
 }
@@ -82,26 +100,34 @@ if (!move_uploaded_file($_FILES['video']['tmp_name'], "$uploadsDir/$filename")) 
     exit;
 }
 
-$GLOBALS['logger']->info('Response video uploaded.', ['user_id' => $user['id'], 'email' => $user['email'], 'prompt' => $prompt, 'filename' => $filename]);
+$GLOBALS['logger']->info('Response video uploaded.', [
+    'user_id' => $user['id'],
+    'email' => $user['email'],
+    'prompt' => $promptFilename,
+    'filename' => $filename,
+]);
 
 $pdo = db();
 
 // Get prompt details including owner
-$stmt = $pdo->prepare('SELECT p.id, p.user_id, owner.email AS owner_email, owner.username AS owner_username
+$stmt = $pdo->prepare('SELECT p.id, p.user_id, p.filename, owner.email AS owner_email, owner.username AS owner_username
     FROM prompts p
     JOIN users owner ON p.user_id = owner.id
-    WHERE p.filename = ?');
-$stmt->execute([$prompt]);
+    WHERE ' . ($promptIdentifier['type'] === 'id' ? 'p.id = ?' : 'p.filename = ?'));
+$stmt->execute([$promptIdentifier['value']]);
 $promptRow = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$promptRow) {
     http_response_code(404);
-    $GLOBALS['logger']->error('Prompt not found in database for response.', ['prompt_filename' => $prompt]);
+    $GLOBALS['logger']->error('Prompt not found in database for response.', [
+        'prompt_identifier' => $promptIdentifier,
+    ]);
     echo json_encode(['error' => 'Prompt not found.']);
     exit;
 }
 
 $promptId = $promptRow['id'];
+$promptFilename = $promptRow['filename'];
 
 // Save the response to the database
 $stmt = $pdo->prepare('INSERT INTO responses (prompt_id, user_id, filename, status) VALUES (?, ?, ?, ?)');
