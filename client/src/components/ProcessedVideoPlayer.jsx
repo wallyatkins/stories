@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 function encodeSegments(path) {
   return path
@@ -55,12 +55,13 @@ function variantToSource(variant) {
 }
 
 export default function ProcessedVideoPlayer({ filename, manifestPath = '', autoPlay = false, className = '', controls = true }) {
+  const videoRef = useRef(null);
   const [sources, setSources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [usingFallback, setUsingFallback] = useState(false);
   const [error, setError] = useState('');
   const [isPlaying, setIsPlaying] = useState(autoPlay);
-  const [isMuted, setIsMuted] = useState(autoPlay);
+  const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
@@ -68,6 +69,10 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
     const clean = stripLeadingSlash(filename);
     const src = `/uploads/${encodeSegments(clean)}`;
     return { src, type: guessMimeType(src) };
+  }, [filename]);
+
+  useEffect(() => {
+    setIsMuted(false);
   }, [filename]);
 
   useEffect(() => {
@@ -108,38 +113,43 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
 
   const videoKey = `${usingFallback ? 'fallback' : 'processed'}-${filename}`;
 
-  const handleLoadedMetadata = (event) => {
-    setDuration(event.currentTarget.duration || 0);
+  const handleLoadedMetadata = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    setDuration(video.duration || 0);
+    setCurrentTime(video.currentTime || 0);
   };
 
-  const handleTimeUpdate = (event) => {
-    setCurrentTime(event.currentTarget.currentTime || 0);
+  const handleTimeUpdate = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    setCurrentTime(video.currentTime || 0);
   };
 
   const handleEnded = () => {
     setIsPlaying(false);
   };
 
-  const togglePlay = (event) => {
-    const video = event.currentTarget.parentElement.querySelector('video');
+  const togglePlay = () => {
+    const video = videoRef.current;
     if (!video) return;
     if (video.paused) {
-      video.play();
+      video.play().catch(() => setIsPlaying(false));
     } else {
       video.pause();
     }
   };
 
-  const toggleMute = (event) => {
-    const video = event.currentTarget.parentElement.querySelector('video');
+  const toggleMute = () => {
+    const video = videoRef.current;
     if (!video) return;
-    video.muted = !video.muted;
-    setIsMuted(video.muted);
+    const next = !video.muted;
+    video.muted = next;
+    setIsMuted(next);
   };
 
   const handleScrub = (event) => {
-    const videoContainer = event.currentTarget.closest('.video-shell');
-    const video = videoContainer?.querySelector('video');
+    const video = videoRef.current;
     if (!video) return;
     const next = Number(event.target.value);
     video.currentTime = next;
@@ -147,6 +157,12 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
   };
 
   const progressPercent = duration ? Math.min((currentTime / duration) * 100, 100) : 0;
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = isMuted;
+  }, [isMuted]);
 
   return (
     <div className={`video-shell relative w-full overflow-hidden rounded-3xl bg-black ${className}`}>
@@ -158,16 +174,15 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
         ) : (
           <video
             key={videoKey}
+            ref={videoRef}
             className="absolute inset-0 h-full w-full bg-black object-contain"
             controls={false}
             autoPlay={autoPlay}
             playsInline
             preload="metadata"
-            muted={isMuted}
             onPlay={(event) => {
               setError('');
               setIsPlaying(true);
-              handleTimeUpdate(event);
             }}
             onPause={() => setIsPlaying(false)}
             onLoadedMetadata={handleLoadedMetadata}
