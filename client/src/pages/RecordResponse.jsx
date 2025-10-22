@@ -88,8 +88,8 @@ export default function RecordResponse() {
         </div>
       ) : recordedBlob ? (
         <div className="relative flex h-full w-full flex-col">
-          <MirroredVideoPlayer src={recordedUrl} />
-          <div className="absolute bottom-32 left-0 right-0 flex justify-center space-x-8">
+          <MirroredVideoPlayer src={recordedUrl} autoPlay />
+          <div className="absolute bottom-10 left-0 right-0 flex justify-center space-x-8">
             <button onClick={discard} className="flex flex-col items-center">
               <span className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center text-white text-xl">🗑️</span>
               <span className="text-red-400 text-sm mt-1">Discard</span>

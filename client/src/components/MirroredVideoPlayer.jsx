@@ -11,14 +11,14 @@ function formatTime(seconds) {
 
 export default function MirroredVideoPlayer({ src, autoPlay = false, muted = false }) {
   const videoRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(autoPlay);
-  const [isMuted, setIsMuted] = useState(muted || autoPlay);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(muted);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
 
   useEffect(() => {
-    setIsPlaying(autoPlay);
-    setIsMuted(muted || autoPlay);
+    setIsPlaying(false);
+    setIsMuted(muted);
     setCurrentTime(0);
   }, [src, autoPlay, muted]);
 
@@ -67,6 +67,13 @@ export default function MirroredVideoPlayer({ src, autoPlay = false, muted = fal
     video.muted = isMuted;
   }, [isMuted]);
 
+  const handleCanPlayThrough = useCallback(() => {
+    if (!autoPlay) return;
+    const video = videoRef.current;
+    if (!video || !video.paused) return;
+    video.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+  }, [autoPlay]);
+
   const togglePlay = useCallback(() => {
     setIsPlaying((prev) => !prev);
   }, []);
@@ -86,19 +93,19 @@ export default function MirroredVideoPlayer({ src, autoPlay = false, muted = fal
   const progressPercent = duration ? Math.min((currentTime / duration) * 100, 100) : 0;
 
   return (
-    <div className="relative w-full overflow-hidden rounded-3xl bg-black">
+    <div className="relative mx-auto w-full max-w-[520px] aspect-[9/16] overflow-hidden rounded-3xl bg-black">
       <video
         key={src}
         ref={videoRef}
         src={src}
         playsInline
-        autoPlay={autoPlay}
         muted={isMuted}
         controls={false}
+        onCanPlayThrough={handleCanPlayThrough}
         className="h-full w-full transform -scale-x-100 object-contain"
       />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
-      <div className="pointer-events-auto absolute bottom-4 left-1/2 flex w-[90%] max-w-xl -translate-x-1/2 flex-col gap-3 rounded-2xl bg-black/60 px-4 py-3 text-white shadow-2xl backdrop-blur">
+      <div className="pointer-events-auto absolute bottom-4 left-1/2 flex w-[90%] -translate-x-1/2 flex-col gap-3 rounded-2xl bg-black/60 px-4 py-3 text-white shadow-2xl backdrop-blur">
         <div className="flex items-center justify-between text-xs text-white/80">
           <span>Preview</span>
           <span>

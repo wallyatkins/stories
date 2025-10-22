@@ -96,13 +96,16 @@ export default function VideoRecorder({ onRecorded }) {
 
   return (
     <div className="relative">
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        controls={!!recordedUrl}
-        className="w-full mb-2 transform -scale-x-100"
-      />
+      <div className="relative mx-auto mb-4 w-full max-w-[520px] aspect-[9/16] overflow-hidden rounded-3xl bg-black">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          controls={!!recordedUrl}
+          className="absolute inset-0 h-full w-full transform -scale-x-100 object-cover"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+      </div>
       <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white p-2 rounded">
         {message}
         {error && <span className="block text-xs text-red-300 mt-1">{error}</span>}

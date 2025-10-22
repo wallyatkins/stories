@@ -60,7 +60,7 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
   const [loading, setLoading] = useState(true);
   const [usingFallback, setUsingFallback] = useState(false);
   const [error, setError] = useState('');
-  const [isPlaying, setIsPlaying] = useState(autoPlay);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -72,7 +72,9 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
   }, [filename]);
 
   useEffect(() => {
+    setIsPlaying(false);
     setIsMuted(false);
+    setCurrentTime(0);
   }, [filename]);
 
   useEffect(() => {
@@ -131,13 +133,7 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
   };
 
   const togglePlay = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.paused) {
-      video.play().catch(() => setIsPlaying(false));
-    } else {
-      video.pause();
-    }
+    setIsPlaying((prev) => !prev);
   };
 
   const toggleMute = () => {
@@ -164,9 +160,48 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
     video.muted = isMuted;
   }, [isMuted]);
 
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (isPlaying) {
+      const playPromise = video.play();
+      if (playPromise?.catch) {
+        playPromise.catch(() => setIsPlaying(false));
+      }
+    } else {
+      video.pause();
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (isPlaying) {
+      const playPromise = video.play();
+      if (playPromise?.catch) {
+        playPromise.catch(() => setIsPlaying(false));
+      }
+    } else {
+      video.pause();
+    }
+  }, [isPlaying]);
+
+  const handleCanPlayThrough = () => {
+    if (!autoPlay) return;
+    const video = videoRef.current;
+    if (!video || !video.paused) return;
+    video.play().then(() => {
+      setIsPlaying(true);
+    }).catch(() => {
+      setIsPlaying(false);
+    });
+  };
+
+  const showOverlayControls = controls !== false;
+
   return (
-    <div className={`video-shell relative w-full overflow-hidden rounded-3xl bg-black ${className}`}>
-      <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+    <div className={`video-shell relative mx-auto w-full max-w-[520px] aspect-[9/16] overflow-hidden rounded-3xl bg-black ${className}`}>
+      <div className="absolute inset-0">
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75 text-white">
             <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-white" />
@@ -175,11 +210,11 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
           <video
             key={videoKey}
             ref={videoRef}
-            className="absolute inset-0 h-full w-full bg-black object-contain"
+            className="absolute inset-0 h-full w-full bg-black object-cover"
             controls={false}
-            autoPlay={autoPlay}
             playsInline
             preload="metadata"
+            muted={isMuted}
             onPlay={(event) => {
               setError('');
               setIsPlaying(true);
@@ -188,6 +223,7 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
             onLoadedMetadata={handleLoadedMetadata}
             onTimeUpdate={handleTimeUpdate}
             onEnded={handleEnded}
+            onCanPlayThrough={handleCanPlayThrough}
             onError={() => setError('We could not play this video. Try refreshing the page.')}
           >
             {sources.map((source) => (
@@ -198,8 +234,8 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
         )}
       </div>
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/10" />
-      {!loading && (
-        <div className="pointer-events-auto absolute bottom-4 left-1/2 flex w-[90%] max-w-xl -translate-x-1/2 flex-col gap-3 rounded-2xl bg-black/60 px-4 py-3 text-white shadow-2xl backdrop-blur">
+      {showOverlayControls && !loading && (
+        <div className="pointer-events-auto absolute bottom-4 left-1/2 flex w-[90%] -translate-x-1/2 flex-col gap-3 rounded-2xl bg-black/60 px-4 py-3 text-white shadow-2xl backdrop-blur">
           <div className="flex items-center justify-between text-xs text-white/80">
             <span>{usingFallback ? 'Original upload' : 'Story playback'}</span>
             <span>
