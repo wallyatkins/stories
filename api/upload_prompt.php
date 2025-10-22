@@ -3,6 +3,7 @@ require_once __DIR__ . '/logger.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/push_notifications.php';
 
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -103,9 +104,9 @@ try {
         exit;
     }
 
-    $stmt = $pdo->prepare('INSERT INTO prompts (user_id, friend_id, filename, status) VALUES (?, ?, ?, ?)');
+    $stmt = $pdo->prepare('INSERT INTO prompts (user_id, friend_id, filename, status) VALUES (?, ?, ?, ?) RETURNING id');
     $stmt->execute([$user['id'], $friendId, $filename, 'pending']);
-    $promptId = $pdo->lastInsertId();
+    $promptId = $stmt->fetchColumn();
     $GLOBALS['logger']->info('Prompt saved to database with pending status.', [
         'user_id' => $user['id'],
         'friend_id' => $friendId,
@@ -123,6 +124,15 @@ try {
 <p>Thanks for sharing,<br>The Stories Team</p>
 HTML;
     send_email($config, $user['email'], $subject, $htmlBody, $textBody);
+
+    if ($friend && push_is_enabled()) {
+        push_send_notification((int)$friend['id'], [
+            'title' => 'New story prompt awaits',
+            'body' => sprintf('%s sent you a new prompt to explore.', $recipientName),
+            'url' => sprintf('/prompt/%s', $promptId),
+            'tag' => 'prompt-' . $promptId,
+        ]);
+    }
 
     echo json_encode([
         'id' => $promptId,

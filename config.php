@@ -31,6 +31,14 @@ return [
         // Generate with: openssl rand -hex 32
         'token' => getenv('PIPELINE_API_TOKEN') ?: ''
     ],
+    'push' => [
+        'enabled' => filter_var(getenv('PUSH_ENABLED'), FILTER_VALIDATE_BOOL) ?? false,
+        'vapid' => [
+            'subject' => getenv('PUSH_VAPID_SUBJECT') ?: '',
+            'public' => getenv('PUSH_VAPID_PUBLIC') ?: '',
+            'private' => getenv('PUSH_VAPID_PRIVATE') ?: '',
+        ],
+    ],
     'db' => [
         'dsn' => getenv('DB_DSN') ?: '',
         'user' => getenv('DB_USER') ?: '',

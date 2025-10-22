@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import LoginForm from '../components/LoginForm';
 import promptLogo from '../assets/prompt.svg';
 import storyLogo from '../assets/story.svg';
@@ -32,6 +33,26 @@ function HeroGraphic() {
 }
 
 export default function Landing() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/check_login', { headers: { 'Cache-Control': 'no-store' } })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!active) return;
+        if (data?.authenticated) {
+          navigate('/contacts', { replace: true });
+        }
+      })
+      .catch((error) => {
+        console.warn('Failed to check login state on landing', error);
+      });
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
+
   return (
     <div className="relative">
       <div className="absolute inset-x-0 top-0 -z-10 h-[420px] bg-gradient-to-br from-coral/40 via-gold/25 to-teal/40 blur-3xl" />

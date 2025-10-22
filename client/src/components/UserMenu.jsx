@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AvatarImage from './AvatarImage';
+import NotificationToggle from './NotificationToggle.jsx';
 
 export default function UserMenu({ user }) {
   const [open, setOpen] = useState(false);
@@ -37,17 +38,24 @@ export default function UserMenu({ user }) {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 text-gray-800">
+        <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white/95 py-2 shadow-xl ring-1 ring-black/10 backdrop-blur z-50 text-gray-800">
+          <div className="px-4 pb-2 text-xs text-gray-500">
+            Signed in as
+            <br />
+            <span className="font-semibold text-nav-bg">{user.email}</span>
+          </div>
+          <NotificationToggle />
+          <div className="my-1 border-t border-gray-100" />
           <Link
             to="/profile"
-            className="block px-4 py-2 text-sm hover:bg-gray-100"
+            className="block px-4 py-2 text-sm text-gray-700 transition hover:bg-gray-100"
             onClick={() => setOpen(false)}
           >
             Profile
           </Link>
           <Link
             to="/logout"
-            className="block px-4 py-2 text-sm hover:bg-gray-100"
+            className="block px-4 py-2 text-sm text-gray-700 transition hover:bg-gray-100"
             onClick={() => setOpen(false)}
           >
             Logout

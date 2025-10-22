@@ -1,6 +1,7 @@
 {
     "require": {
         "phpmailer/phpmailer": "^6.5",
-        "monolog/monolog": "^3.5"
+        "monolog/monolog": "^3.5",
+        "minishlink/web-push": "^9.0"
     }
 }

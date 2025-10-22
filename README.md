@@ -113,3 +113,28 @@ The PHP backend uses [Composer](https://getcomposer.org/) to manage dependencies
     ```
 
 This will create a `vendor` directory with the necessary libraries. Remember to run `php composer.phar install` on your hosting environment to ensure all dependencies are correctly installed.
+
+## Push Notifications
+
+Story Prompts can send browser notifications for new prompts and responses. The flow works over standard Web Push and requires HTTPS.
+
+1. **Generate VAPID keys**
+
+   ```bash
+   php scripts/generate_vapid_keys.php
+   ```
+
+   The script prints both public and private keys and sample `.env` entries.
+
+2. **Configure environment** – copy the output into `.env`:
+
+   ```
+   PUSH_ENABLED=true
+   PUSH_VAPID_PUBLIC=<public-key>
+   PUSH_VAPID_PRIVATE=<private-key>
+   PUSH_VAPID_SUBJECT=mailto:you@example.com
+   ```
+
+3. **Run the migration** – apply `database/migrations/009_create_push_subscriptions.sql` to your PostgreSQL database.
+
+Users can enable or disable notifications from the avatar menu. When enabled, their subscription is stored in PostgreSQL and the backend will send push messages whenever a new prompt or response is created.

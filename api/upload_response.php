@@ -3,6 +3,7 @@ require_once __DIR__ . '/logger.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/push_notifications.php';
 
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -130,14 +131,24 @@ $promptId = $promptRow['id'];
 $promptFilename = $promptRow['filename'];
 
 // Save the response to the database
-$stmt = $pdo->prepare('INSERT INTO responses (prompt_id, user_id, filename, status) VALUES (?, ?, ?, ?)');
+$stmt = $pdo->prepare('INSERT INTO responses (prompt_id, user_id, filename, status) VALUES (?, ?, ?, ?) RETURNING id');
 $stmt->execute([$promptId, $user['id'], $filename, 'pending']);
+$responseId = $stmt->fetchColumn();
 
 $GLOBALS['logger']->info('Response metadata updated in database.', [
     'user_id' => $user['id'],
     'prompt_id' => $promptId,
     'filename' => $filename
 ]);
+
+if (push_is_enabled()) {
+    push_send_notification((int)$promptRow['user_id'], [
+        'title' => 'Your story prompt has a reply',
+        'body' => sprintf('%s sent a new story response.', $user['username'] ?? $user['email']),
+        'url' => sprintf('/watch/%s', $filename),
+        'tag' => 'response-' . $responseId,
+    ]);
+}
 
 // Notify responder that processing has begun
 $responderName = $user['username'] ?? $user['email'];
