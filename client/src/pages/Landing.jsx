@@ -90,8 +90,8 @@ export default function Landing() {
         </div>
       </div>
       <section id="how-it-works" className="container mx-auto grid gap-6 px-6 pb-16 md:grid-cols-3">
-        {[{ title: 'Spark a prompt', description: 'Record a warm video question inside a cozy, speech-bubble interface and send it to someone special.' },
-          { title: 'Watch the ripple', description: 'Your prompt lands with a shimmering ripple—friends can feel the intent before they even hit play.' },
+        {[{ title: 'Spark with a prompt', description: 'Record a warm video question inside a cozy, speech-bubble interface and send it to someone special.' },
+          { title: 'If you want to make a ripple', description: 'Your prompt lands with a shimmering ripple—friends can feel the intent before they even hit play.' },
           { title: 'Capture the reply', description: 'They respond with their own story bubble, building a living library you can revisit anytime.' }].map((item) => (
           <div key={item.title} className="bubble-card bubble-accent">
             <div className="bubble-content flex flex-col gap-3 text-left">

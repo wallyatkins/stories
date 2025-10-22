@@ -31,6 +31,7 @@ function BrandMark() {
 export default function Nav() {
   const [user, setUser] = useState(null);
   const location = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,6 +52,10 @@ export default function Nav() {
     };
   }, [location.pathname]);
 
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
   const links = [
     { href: '/contacts', label: 'Contacts' },
     { href: '/prompts', label: 'Prompts' },
@@ -62,6 +67,18 @@ export default function Nav() {
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
         <BrandMark />
         <div className="flex items-center gap-8">
+          <button
+            type="button"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white shadow md:hidden"
+            onClick={() => setMobileOpen((prev) => !prev)}
+            aria-label="Toggle navigation"
+          >
+            <span className="relative block h-4 w-5">
+              <span className={`absolute inset-x-0 top-0 h-0.5 rounded-full bg-white transition ${mobileOpen ? 'translate-y-2 rotate-45' : ''}`} />
+              <span className={`absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-white transition ${mobileOpen ? 'opacity-0' : ''}`} />
+              <span className={`absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-white transition ${mobileOpen ? '-translate-y-2 -rotate-45' : ''}`} />
+            </span>
+          </button>
           <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm font-medium shadow-lg md:flex">
             {links.map((link) => {
               const active = location.pathname.startsWith(link.href);
@@ -86,6 +103,27 @@ export default function Nav() {
           <UserMenu user={user} />
         </div>
       </div>
+      {mobileOpen && (
+        <div className="md:hidden">
+          <div className="mx-4 mt-2 space-y-2 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur">
+            {links.map((link) => {
+              const active = location.pathname.startsWith(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className={`block rounded-full px-4 py-2 text-sm transition ${
+                    active ? 'bg-white/80 text-teal' : 'text-white/90 hover:bg-white/20'
+                  }`}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
