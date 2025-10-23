@@ -54,6 +54,18 @@ function variantToSource(variant) {
   return null;
 }
 
+function pruneUnsupportedSources(sources) {
+  if (!Array.isArray(sources) || sources.length === 0) {
+    return [];
+  }
+  const testVideo = document.createElement('video');
+  return sources.filter(({ type, src }) => {
+    const mime = type || guessMimeType(src);
+    const support = testVideo.canPlayType(mime || '');
+    return typeof support === 'string' && support !== '';
+  });
+}
+
 export default function ProcessedVideoPlayer({ filename, manifestPath = '', autoPlay = false, className = '', controls = true }) {
   const videoRef = useRef(null);
   const [sources, setSources] = useState([]);
@@ -88,10 +100,10 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
         const res = await fetch(manifestUrl, { cache: 'no-store' });
         if (!res.ok) throw new Error(`Manifest not found at ${manifestUrl}`);
         const manifest = await res.json();
-        const urls = (manifest?.variants || [])
-          .map(variantToSource)
-          .filter(Boolean);
-        if (!urls.length) throw new Error('Manifest missing variants');
+        const urls = pruneUnsupportedSources(
+          (manifest?.variants || []).map(variantToSource).filter(Boolean)
+        );
+        if (!urls.length) throw new Error('Manifest missing supported variants');
         if (!cancelled) {
           setSources(urls);
         }
@@ -99,7 +111,11 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
         console.warn('Falling back to original upload', err);
         if (!cancelled) {
           setUsingFallback(true);
-          setSources([fallbackSource]);
+          const fallback = pruneUnsupportedSources([fallbackSource]);
+          if (!fallback.length) {
+            setError('Processed video is not ready yet. Please try again in a moment.');
+          }
+          setSources(fallback);
         }
       } finally {
         if (!cancelled) {
@@ -133,6 +149,7 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
   };
 
   const togglePlay = () => {
+    if (!sources.length) return;
     setIsPlaying((prev) => !prev);
   };
 
@@ -234,7 +251,7 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
         )}
       </div>
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/10" />
-      {showOverlayControls && !loading && (
+      {showOverlayControls && !loading && sources.length > 0 && (
         <div className="pointer-events-auto absolute bottom-4 left-1/2 flex w-[90%] -translate-x-1/2 flex-col gap-3 rounded-2xl bg-black/60 px-4 py-3 text-white shadow-2xl backdrop-blur">
           <div className="flex items-center justify-between text-xs text-white/80">
             <span>{usingFallback ? 'Original upload' : 'Story playback'}</span>
@@ -291,7 +308,7 @@ export default function ProcessedVideoPlayer({ filename, manifestPath = '', auto
           </div>
         </div>
       )}
-      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-xs text-red-600 text-center">{error}</p>}
     </div>
   );
 }
