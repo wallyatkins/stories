@@ -27,6 +27,12 @@ return [
             'secure' => getenv('SMTP_SECURE') ?: 'tls'
         ]
     ],
+    'wallyauth' => [
+        'issuer' => getenv('WALLYAUTH_ISSUER') ?: 'https://auth.wallyatkins.com',
+        'client_id' => getenv('WALLYAUTH_CLIENT_ID') ?: 'stories',
+        'client_secret' => getenv('WALLYAUTH_CLIENT_SECRET') ?: 'ST9vB3kM7rLqP5xW2nZ8yJ1hF4tD0aEc6mX',
+        'redirect_uri' => getenv('WALLYAUTH_REDIRECT_URI') ?: '',
+    ],
     'pipeline' => [
         // Generate with: openssl rand -hex 32
         'token' => getenv('PIPELINE_API_TOKEN') ?: ''
