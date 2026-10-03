@@ -66,7 +66,7 @@ export default function NotificationToggle() {
 
   if (!supported) {
     return (
-      <div className="px-4 py-2 text-xs text-gray-400">
+      <div className="px-4 py-2 text-xs text-slate-400 dark:text-zinc-500">
         Notifications unavailable in this browser.
       </div>
     );
@@ -81,13 +81,13 @@ export default function NotificationToggle() {
         className={`flex w-full items-center justify-between px-4 py-2 text-sm transition ${
           enabled
             ? 'text-teal hover:bg-teal/10'
-            : 'text-gray-700 hover:bg-gray-100'
+            : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800'
         }`}
       >
         <span>{enabled ? 'Disable notifications' : 'Enable notifications'}</span>
         <span
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-            enabled ? 'bg-teal' : 'bg-gray-300'
+            enabled ? 'bg-teal' : 'bg-slate-300 dark:bg-zinc-700'
           }`}
         >
           <span
@@ -97,7 +97,7 @@ export default function NotificationToggle() {
           />
         </span>
       </button>
-      {error && <span className="px-4 text-xs text-red-500">{error}</span>}
+      {error && <span className="px-4 text-xs text-rose-500">{error}</span>}
     </div>
   );
 }

@@ -8,30 +8,34 @@ try {
     header('Content-Type: application/json');
 
     $user = $_SESSION['user'];
-    $GLOBALS['logger']->info('List prompts request.', ['user_id' => $user['id']]);
+    $filter = $_GET['filter'] ?? 'all';
+    $GLOBALS['logger']->info('List prompts request.', ['user_id' => $user['id'], 'filter' => $filter]);
 
     $pdo = db();
 
+    $timeClause = ($filter === 'recent') ? 'AND p.created_at >= NOW() - INTERVAL \'30 days\'' : '';
+
     // Select prompts sent to the current user (received)
     $stmt_received = $pdo->prepare(
-        'SELECT p.id, p.filename, p.created_at, p.status, p.processed_manifest, p.processed_at, u.username, u.email AS user_email
+        "SELECT p.id, p.filename, p.created_at, p.status, p.processed_manifest, p.processed_at, u.username, u.email AS user_email, u.avatar AS user_avatar
          FROM prompts p
          JOIN users u ON p.user_id = u.id
          WHERE p.friend_id = ?
-           AND p.status = \'processed\'
-           AND p.created_at >= NOW() - INTERVAL \'1 week\'
-         ORDER BY p.created_at DESC'
+           AND p.status = 'processed'
+           {$timeClause}
+         ORDER BY p.created_at DESC"
     );
     $stmt_received->execute([$user['id']]);
     $received_prompts = $stmt_received->fetchAll(PDO::FETCH_ASSOC);
 
     // Select prompts sent by the current user (sent)
     $stmt_sent = $pdo->prepare(
-        'SELECT p.id, p.filename, p.created_at, p.status, p.processed_manifest, p.processed_at, u.username, u.email AS user_email
+        "SELECT p.id, p.filename, p.created_at, p.status, p.processed_manifest, p.processed_at, u.username, u.email AS user_email, u.avatar AS user_avatar
          FROM prompts p
          JOIN users u ON p.friend_id = u.id
-         WHERE p.user_id = ? AND p.created_at >= NOW() - INTERVAL \'1 week\'
-         ORDER BY p.created_at DESC'
+         WHERE p.user_id = ?
+           {$timeClause}
+         ORDER BY p.created_at DESC"
     );
     $stmt_sent->execute([$user['id']]);
     $sent_prompts = $stmt_sent->fetchAll(PDO::FETCH_ASSOC);

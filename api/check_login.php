@@ -10,6 +10,8 @@ $authenticated = check_login();
 $response = ['authenticated' => $authenticated];
 if ($authenticated) {
     $response['user'] = $_SESSION['user'] ?? null;
+} else {
+    $response['login_url'] = '/api/oauth_login.php';
 }
 
 echo json_encode($response);

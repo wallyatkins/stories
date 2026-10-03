@@ -20,6 +20,11 @@ if (ini_get('session.use_cookies')) {
     );
 }
 session_destroy();
-clear_trusted_device_cookie();
+
+if (!empty($_GET['redirect'])) {
+    header('Location: /', true, 302);
+    exit;
+}
+
 header('Content-Type: application/json');
 echo json_encode(['loggedOut' => true]);

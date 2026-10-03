@@ -17,9 +17,9 @@ class WallyAuthClient
         $config = require __DIR__ . '/../config.php';
         $authConfig = $config['wallyauth'] ?? [];
 
-        $this->issuerUrl = rtrim($issuerUrl ?? ($authConfig['issuer'] ?? getenv('WALLYAUTH_ISSUER') ?: 'https://auth.wallyatkins.com'), '/');
-        $this->clientId = $clientId ?? ($authConfig['client_id'] ?? getenv('WALLYAUTH_CLIENT_ID') ?: 'stories');
-        $this->clientSecret = $clientSecret ?? ($authConfig['client_secret'] ?? getenv('WALLYAUTH_CLIENT_SECRET') ?: 'ST9vB3kM7rLqP5xW2nZ8yJ1hF4tD0aEc6mX');
+        $this->issuerUrl = rtrim($issuerUrl ?? ($authConfig['issuer'] ?? (getenv('WALLYAUTH_ISSUER') ?: 'https://auth.wallyatkins.com')), '/');
+        $this->clientId = $clientId ?? ($authConfig['client_id'] ?? (getenv('WALLYAUTH_CLIENT_ID') ?: 'stories'));
+        $this->clientSecret = $clientSecret ?? ($authConfig['client_secret'] ?? (getenv('WALLYAUTH_CLIENT_SECRET') ?: null));
 
         if ($redirectUri) {
             $this->redirectUri = $redirectUri;
@@ -63,7 +63,7 @@ class WallyAuthClient
             'code_verifier' => $codeVerifier,
         ];
 
-        if ($this->clientSecret) {
+        if ($this->clientSecret !== null && $this->clientSecret !== '') {
             $params['client_secret'] = $this->clientSecret;
         }
 

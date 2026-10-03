@@ -23,15 +23,27 @@ export default function ProfilePage() {
     navigate('/contacts', { replace: true });
   }
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-48">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-coral"></div>
+      </div>
+    );
+  }
 
   if (!user) {
-    return <p className="p-4">You must be logged in to edit your profile.</p>;
+    return (
+      <div className="container mx-auto p-6 max-w-md text-center">
+        <div className="bubble-card p-6">
+          <p className="text-slate-700 dark:text-slate-300 font-medium">You must be logged in to edit your profile.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <Profile user={user} onUpdated={handleUpdated} onClose={() => {}} />
+    <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <Profile user={user} onUpdated={handleUpdated} onClose={() => navigate('/contacts')} />
     </div>
   );
 }

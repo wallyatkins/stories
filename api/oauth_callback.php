@@ -37,6 +37,7 @@ try {
     $rawEmail = (string)($userInfo['email'] ?? '');
     $email = normalize_email($rawEmail);
     $name = (string)($userInfo['name'] ?? $userInfo['preferred_username'] ?? $userInfo['username'] ?? '');
+    $picture = (string)($userInfo['picture'] ?? $userInfo['avatar'] ?? $userInfo['avatar_url'] ?? '');
 
     if ($email === '') {
         throw new \RuntimeException('WallyAuth did not provide a verified email address.');
@@ -52,20 +53,45 @@ try {
     if (!$user) {
         // Auto-provision user account from WallyAuth profile
         $username = $name !== '' ? $name : explode('@', $email)[0];
-        $insert = $pdo->prepare('INSERT INTO users (email, username, avatar, wallyauth_sub) VALUES (?, ?, ?, ?) RETURNING id, email, username, avatar');
-        $insert->execute([$email, $username, null, $sub]);
+        $avatarVal = $picture !== '' ? $picture : null;
+        $insert = $pdo->prepare('INSERT INTO users (email, username, avatar, wallyauth_sub) VALUES (?, ?, ?, ?) RETURNING id, email, username, avatar, wallyauth_sub');
+        $insert->execute([$email, $username, $avatarVal, $sub]);
         $user = $insert->fetch(PDO::FETCH_ASSOC);
         $GLOBALS['logger']->info('Provisioned new user via WallyAuth SSO', ['user_id' => $user['id'], 'email' => $email]);
     } else {
-        // Update wallyauth_sub if not set
+        $updates = [];
+        $params = [];
+
         if (empty($user['wallyauth_sub']) && $sub !== '') {
-            $upd = $pdo->prepare('UPDATE users SET wallyauth_sub = ? WHERE id = ?');
-            $upd->execute([$sub, $user['id']]);
+            $updates[] = 'wallyauth_sub = ?';
+            $params[] = $sub;
+            $user['wallyauth_sub'] = $sub;
+        }
+
+        // Sync WallyAuth avatar if provided and currently null or external
+        if ($picture !== '' && ($user['avatar'] === null || str_starts_with((string)$user['avatar'], 'http'))) {
+            $updates[] = 'avatar = ?';
+            $params[] = $picture;
+            $user['avatar'] = $picture;
+        }
+
+        if (empty($user['username']) && $name !== '') {
+            $updates[] = 'username = ?';
+            $params[] = $name;
+            $user['username'] = $name;
+        }
+
+        if (!empty($updates)) {
+            $params[] = $user['id'];
+            $sql = 'UPDATE users SET ' . implode(', ', $updates) . ' WHERE id = ?';
+            $pdo->prepare($sql)->execute($params);
         }
     }
 
     $_SESSION['user'] = $user;
-    set_trusted_device_cookie($user);
+    if (!empty($tokens['access_token'])) {
+        $_SESSION['oauth_access_token'] = $tokens['access_token'];
+    }
 
     $GLOBALS['logger']->info('WallyAuth SSO login successful', ['user_id' => $user['id'], 'email' => $user['email']]);
 

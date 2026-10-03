@@ -15,7 +15,8 @@ import VideoPlayerPage from './pages/VideoPlayerPage';
 
 function AppRoutes() {
   const location = useLocation();
-  const showNav = location.pathname !== '/';
+  const isRecording = location.pathname.startsWith('/record');
+  const showNav = location.pathname !== '/' && !isRecording;
 
   return (
     <>

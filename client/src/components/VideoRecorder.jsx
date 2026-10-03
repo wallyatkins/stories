@@ -95,32 +95,54 @@ export default function VideoRecorder({ onRecorded }) {
   }
 
   return (
-    <div className="relative">
+    <div className="relative mx-auto w-full max-w-[520px] aspect-[9/16] overflow-hidden rounded-3xl bg-black shadow-2xl border border-white/10">
       <video
         ref={videoRef}
         autoPlay
         playsInline
         controls={!!recordedUrl}
-        className="w-full mb-2 transform -scale-x-100"
+        className="h-full w-full object-cover transform -scale-x-100"
       />
-      <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white p-2 rounded">
-        {message}
-        {error && <span className="block text-xs text-red-300 mt-1">{error}</span>}
-      </div>
-      {!recordedUrl && (
-        <button
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center justify-center"
-          onClick={recording ? stopRecording : startRecording}
-          disabled={message.includes('Processing') || message.includes('Unable')}
-        >
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+      
+      {/* Status HUD */}
+      <div className="absolute top-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 z-10 w-[90%] pointer-events-none">
+        <div className="flex items-center gap-2 rounded-full bg-black/60 px-4 py-1.5 backdrop-blur-md border border-white/15 text-white shadow-lg">
           {recording ? (
-            <span className="block rounded-full border-4 border-red-600 w-16 h-16 flex items-center justify-center">
-              <span className="bg-red-600 w-6 h-6"></span>
-            </span>
+            <span className="h-2.5 w-2.5 rounded-full bg-red-500 animate-ping" />
           ) : (
-            <span className="block rounded-full bg-red-600 w-16 h-16"></span>
+            <span className="h-2 w-2 rounded-full bg-gold" />
           )}
-        </button>
+          <span className="text-xs font-medium tracking-wide">{message}</span>
+        </div>
+        {error && (
+          <span className="rounded-full bg-rose-950/80 border border-rose-500/30 px-3 py-1 text-xs text-rose-300 backdrop-blur-md text-center">
+            {error}
+          </span>
+        )}
+      </div>
+
+      {/* Record button */}
+      {!recordedUrl && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">
+          <button
+            type="button"
+            className="flex items-center justify-center transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+            onClick={recording ? stopRecording : startRecording}
+            disabled={message.includes('Processing') || message.includes('Unable')}
+            title={recording ? 'Stop recording' : 'Start recording'}
+          >
+            {recording ? (
+              <span className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white/80 bg-black/40 backdrop-blur-sm shadow-2xl animate-pulse">
+                <span className="h-8 w-8 rounded-lg bg-red-600 shadow-md"></span>
+              </span>
+            ) : (
+              <span className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white bg-black/40 backdrop-blur-sm shadow-2xl p-1">
+                <span className="h-full w-full rounded-full bg-red-600 hover:bg-red-500 shadow-md transition-colors"></span>
+              </span>
+            )}
+          </button>
+        </div>
       )}
     </div>
   );

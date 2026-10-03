@@ -14,11 +14,17 @@ $_SESSION['oauth_state'] = $state;
 $_SESSION['oauth_code_verifier'] = $codeVerifier;
 
 if (!empty($_GET['return_to'])) {
-    $_SESSION['oauth_return_to'] = (string)$_GET['return_to'];
+    $returnTo = (string)$_GET['return_to'];
+    // Validate that return_to is a safe relative path
+    if (str_starts_with($returnTo, '/') && !str_starts_with($returnTo, '//')) {
+        $_SESSION['oauth_return_to'] = $returnTo;
+    }
 } elseif (!empty($_GET['prompt'])) {
-    $_SESSION['oauth_return_to'] = '/prompts?prompt=' . rawurlencode($_GET['prompt']);
+    $_SESSION['oauth_return_to'] = '/prompt/' . rawurlencode((string)$_GET['prompt']);
 } elseif (!empty($_GET['response'])) {
-    $_SESSION['oauth_return_to'] = '/watch/' . rawurlencode($_GET['response']);
+    $_SESSION['oauth_return_to'] = '/watch/' . rawurlencode((string)$_GET['response']);
+} elseif (!empty($_GET['watch'])) {
+    $_SESSION['oauth_return_to'] = '/watch/' . rawurlencode((string)$_GET['watch']);
 }
 
 $authUrl = $client->getAuthorizationUrl($state, $codeVerifier);

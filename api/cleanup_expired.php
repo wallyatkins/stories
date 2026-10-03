@@ -49,8 +49,7 @@ try {
             } else {
                 $GLOBALS['logger']->error('Failed to delete expired response file.', ['filename' => $response['filename']]);
             }
-        }
-    } else {
+        } else {
             $GLOBALS['logger']->warning('Expired response file not found, deleting record.', ['filename' => $response['filename']]);
             $delete_stmt = $pdo->prepare('DELETE FROM responses WHERE id = ?');
             $delete_stmt->execute([$response['id']]);

@@ -2,14 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: light;
+  --bg-main: #f9fafb;
+  --surface: #ffffff;
+  --text-main: #111827;
+  --text-muted: #6b7280;
+  --border-card: rgba(255, 255, 255, 0.6);
+}
+
+.dark {
+  color-scheme: dark;
+  --bg-main: #0a0a0a;
+  --surface: #151515;
+  --text-main: #f9fafb;
+  --text-muted: #9ca3af;
+  --border-card: rgba(42, 42, 42, 0.8);
+}
+
 body {
-  @apply min-h-screen bg-gradient-to-br from-coral/25 via-white to-teal/20 text-gray-800 antialiased;
-  font-family: 'Quicksand', sans-serif;
+  @apply min-h-screen bg-slate-50 text-gray-900 antialiased transition-colors duration-200 dark:bg-[#0a0a0a] dark:text-gray-100;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 @layer components {
   .bubble-card {
-    @apply relative overflow-hidden rounded-3xl border border-white/40 bg-white/80 p-6 shadow-xl backdrop-blur transition-transform duration-300 ease-out hover:-translate-y-1 hover:shadow-2xl;
+    @apply relative overflow-hidden rounded-3xl border border-white/70 bg-white/80 p-6 shadow-lg backdrop-blur transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-xl dark:border-[#2a2a2a] dark:bg-[#151515]/90 dark:shadow-2xl dark:shadow-black/40 dark:hover:border-[#3a3a3a];
   }
 
   .bubble-accent::before {
@@ -19,8 +37,13 @@ body {
     width: 220px;
     height: 220px;
     border-radius: 9999px;
-    background: radial-gradient(circle at center, rgba(255, 127, 80, 0.4), transparent 70%);
+    background: radial-gradient(circle at center, rgba(255, 127, 80, 0.25), transparent 70%);
     z-index: 0;
+    pointer-events: none;
+  }
+
+  .dark .bubble-accent::before {
+    background: radial-gradient(circle at center, rgba(255, 127, 80, 0.18), transparent 70%);
   }
 
   .bubble-accent::after {
@@ -30,8 +53,13 @@ body {
     width: 200px;
     height: 200px;
     border-radius: 9999px;
-    background: radial-gradient(circle at center, rgba(0, 128, 128, 0.35), transparent 70%);
+    background: radial-gradient(circle at center, rgba(0, 128, 128, 0.22), transparent 70%);
     z-index: 0;
+    pointer-events: none;
+  }
+
+  .dark .bubble-accent::after {
+    background: radial-gradient(circle at center, rgba(0, 128, 128, 0.16), transparent 70%);
   }
 
   .bubble-content {
@@ -45,15 +73,20 @@ body {
     width: 12rem;
     height: 12rem;
     border-radius: 9999px;
-    background: radial-gradient(circle at center, rgba(255, 215, 0, 0.4), transparent 70%);
+    background: radial-gradient(circle at center, rgba(255, 215, 0, 0.35), transparent 70%);
     filter: blur(8px);
+    pointer-events: none;
+  }
+
+  .dark .ripple-ring {
+    background: radial-gradient(circle at center, rgba(255, 215, 0, 0.15), transparent 70%);
   }
 
   .btn-prompt {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-coral via-gold to-teal px-5 py-2 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-gold/70 focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-coral via-gold to-teal px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:brightness-105 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-gold/70 focus:ring-offset-2 dark:focus:ring-offset-[#151515];
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full border border-teal/40 bg-white/70 px-5 py-2 text-sm font-semibold text-teal shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:border-teal hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-teal/50 focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-teal/40 bg-white/80 px-5 py-2.5 text-sm font-semibold text-teal shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:border-teal hover:shadow-lg active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-teal/50 focus:ring-offset-2 dark:border-teal/50 dark:bg-[#1d1d1d] dark:text-teal-400 dark:hover:border-teal-400 dark:focus:ring-offset-[#151515];
   }
 }

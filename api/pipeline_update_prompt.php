@@ -130,21 +130,9 @@ try {
             'manifest' => $manifestPath,
         ]);
 
-        $tokenDir = __DIR__ . '/../metadata/tokens';
-        if (!is_dir($tokenDir) && !mkdir($tokenDir, 0777, true)) {
-            $GLOBALS['logger']->error('Failed to create token directory.', ['directory' => $tokenDir]);
-        }
-
-        $token = bin2hex(random_bytes(16));
-        $tokenData = ['email' => $prompt['friend_email'], 'ts' => time()];
-        $tokenPath = "$tokenDir/$token.json";
-        if (file_put_contents($tokenPath, json_encode($tokenData)) === false) {
-            $GLOBALS['logger']->error('Failed to persist login token for prompt.', ['path' => $tokenPath]);
-        }
-
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $host = $_SERVER['HTTP_HOST'] ?? 'stories.wallyatkins.com';
         $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
-        $link = $scheme . $host . '/verify-login/' . $token . '?prompt=' . rawurlencode($prompt['filename']);
+        $link = $scheme . $host . '/api/oauth_login.php?return_to=' . rawurlencode('/prompt/' . $prompt['id']);
 
         $friendName = $prompt['friend_username'] ?: $prompt['friend_email'];
         $senderName = $prompt['sender_username'] ?: $prompt['sender_email'];
@@ -153,7 +141,7 @@ try {
         $htmlBody = <<<HTML
 <p>Hi {$friendName},</p>
 <p><strong>{$senderName}</strong> just shared a story prompt with you. You can watch it now and reply whenever inspiration strikes.</p>
-<p><a href="{$link}">Watch the story prompt</a></p>
+<p><a href="{$link}" style="display:inline-block;padding:10px 20px;background:#008080;color:#ffffff;text-decoration:none;border-radius:24px;font-weight:600;">Watch the story prompt</a></p>
 <p>We can't wait to hear your response!<br>The Stories Team</p>
 HTML;
         send_email($config, $prompt['friend_email'], $subject, $htmlBody, $textBody);
@@ -198,21 +186,9 @@ HTML;
         'manifest' => $manifestPath,
     ]);
 
-    $tokenDir = __DIR__ . '/../metadata/tokens';
-    if (!is_dir($tokenDir) && !mkdir($tokenDir, 0777, true)) {
-        $GLOBALS['logger']->error('Failed to create token directory.', ['directory' => $tokenDir]);
-    }
-
-    $token = bin2hex(random_bytes(16));
-    $tokenData = ['email' => $response['owner_email'], 'ts' => time()];
-    $tokenPath = "$tokenDir/$token.json";
-    if (file_put_contents($tokenPath, json_encode($tokenData)) === false) {
-        $GLOBALS['logger']->error('Failed to persist login token for response.', ['path' => $tokenPath]);
-    }
-
-    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $host = $_SERVER['HTTP_HOST'] ?? 'stories.wallyatkins.com';
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
-    $link = $scheme . $host . '/verify-login/' . $token . '?response=' . rawurlencode($response['filename']);
+    $link = $scheme . $host . '/api/oauth_login.php?return_to=' . rawurlencode('/watch/' . $response['filename']);
 
     $ownerName = $response['owner_username'] ?: $response['owner_email'];
     $responderName = $response['responder_username'] ?: $response['responder_email'];
@@ -221,7 +197,7 @@ HTML;
     $htmlBody = <<<HTML
 <p>Hi {$ownerName},</p>
 <p><strong>{$responderName}</strong> just replied to your story prompt.</p>
-<p><a href="{$link}">Watch the story response</a></p>
+<p><a href="{$link}" style="display:inline-block;padding:10px 20px;background:#FF7F50;color:#ffffff;text-decoration:none;border-radius:24px;font-weight:600;">Watch the story response</a></p>
 <p>We hope you enjoy it!<br>The Stories Team</p>
 HTML;
     send_email($config, $response['owner_email'], $subject, $htmlBody, $textBody);
