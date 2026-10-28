@@ -93,8 +93,8 @@ export default function Prompts() {
         {sentPrompts.length > 0 ? (
           <ul className="space-y-3.5">
             {sentPrompts.map((prompt) => {
-              const status = prompt.status || 'processed';
-              const isProcessed = status === 'processed';
+              const status = prompt.status || 'ready';
+              const isReady = status === 'processed' || status === 'ready';
               return (
                 <li
                   key={prompt.id || prompt.filename}
@@ -108,12 +108,12 @@ export default function Prompts() {
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       Status:{' '}
-                      <span className={isProcessed ? 'font-medium text-coral' : 'text-gray-400'}>
-                        {isProcessed ? 'Ready to play' : 'Processing'}
+                      <span className={isReady ? 'font-medium text-coral' : 'text-gray-400'}>
+                        {isReady ? 'Ready to play' : 'Processing'}
                       </span>
                     </p>
                   </div>
-                  {isProcessed ? (
+                  {isReady ? (
                     <Link
                       to={`/watch/${prompt.filename}`}
                       className="bubble-content btn-secondary self-start md:self-auto"

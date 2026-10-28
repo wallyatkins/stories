@@ -21,7 +21,7 @@ try {
          FROM prompts p
          JOIN users u ON p.user_id = u.id
          WHERE p.friend_id = ?
-           AND p.status = 'processed'
+           AND p.status IN ('ready', 'processed', 'pending')
            {$timeClause}
          ORDER BY p.created_at DESC"
     );
@@ -34,6 +34,7 @@ try {
          FROM prompts p
          JOIN users u ON p.friend_id = u.id
          WHERE p.user_id = ?
+           AND p.status IN ('ready', 'processed', 'pending')
            {$timeClause}
          ORDER BY p.created_at DESC"
     );

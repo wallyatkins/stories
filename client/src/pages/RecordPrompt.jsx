@@ -18,12 +18,34 @@ export default function RecordPrompt() {
 
   useEffect(() => {
     if (!friend) {
-      fetch('/api/list_friends')
+      let cancelled = false;
+      fetch('/api/check_login')
         .then(res => res.json())
-        .then(data => {
-          const f = data.find(fr => String(fr.id) === String(friendId));
-          setFriend(f);
+        .then(authData => {
+          if (cancelled) return;
+          if (authData?.authenticated && String(authData.user?.id) === String(friendId)) {
+            setFriend({
+              id: authData.user.id,
+              username: authData.user.username ? `${authData.user.username} (Self)` : 'Myself (Practice)',
+              email: authData.user.email,
+              avatar: authData.user.avatar,
+            });
+            return;
+          }
+          return fetch('/api/list_friends')
+            .then(res => res.json())
+            .then(data => {
+              if (cancelled) return;
+              const f = Array.isArray(data) ? data.find(fr => String(fr.id) === String(friendId)) : null;
+              setFriend(f);
+            });
+        })
+        .catch(err => {
+          console.error('Failed to resolve friend info', err);
         });
+      return () => {
+        cancelled = true;
+      };
     }
   }, [friend, friendId]);
 

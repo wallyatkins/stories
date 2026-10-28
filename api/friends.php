@@ -14,38 +14,40 @@ $GLOBALS['logger']->info('Friends API request.', ['user_id' => $user['id'], 'ema
 
 switch ($_SERVER['REQUEST_METHOD']) {
     case 'POST':
-        $friendEmail = $_POST['email'] ?? '';
+        $rawInput = file_get_contents('php://input');
+        $jsonData = json_decode($rawInput, true);
+        $friendEmail = trim((string)($jsonData['email'] ?? $_POST['email'] ?? ''));
+
         if (!filter_var($friendEmail, FILTER_VALIDATE_EMAIL)) {
             http_response_code(400);
             $GLOBALS['logger']->warning('Invalid email provided to add friend.', ['user_id' => $user['id'], 'email' => $user['email'], 'friend_email' => $friendEmail]);
-            echo json_encode(['error' => 'Invalid email']);
+            echo json_encode(['error' => 'Please provide a valid email address']);
             exit;
         }
 
-        $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
+        if (strcasecmp($friendEmail, $user['email']) === 0) {
+            echo json_encode(['success' => true, 'is_self' => true, 'message' => 'Your personal contact is always available.']);
+            exit;
+        }
+
+        $stmt = $pdo->prepare('SELECT id, email, username FROM users WHERE LOWER(email) = LOWER(?)');
         $stmt->execute([$friendEmail]);
-        $friendId = $stmt->fetchColumn();
+        $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$friendId) {
-            http_response_code(404);
-            $GLOBALS['logger']->warning('Friend not found.', ['user_id' => $user['id'], 'email' => $user['email'], 'friend_email' => $friendEmail]);
-            echo json_encode(['error' => 'Friend not found']);
-            exit;
+        if (!$existing) {
+            $defaultUsername = explode('@', $friendEmail)[0];
+            $stmt = $pdo->prepare('INSERT INTO users (email, username) VALUES (?, ?) RETURNING id');
+            $stmt->execute([strtolower($friendEmail), $defaultUsername]);
+            $friendId = (int)$stmt->fetchColumn();
+            $GLOBALS['logger']->info('Auto-provisioned contact into users table.', ['email' => $friendEmail, 'new_user_id' => $friendId]);
+        } else {
+            $friendId = (int)$existing['id'];
         }
 
-        if ($friendId === $user['id']) {
-            http_response_code(400);
-            $GLOBALS['logger']->warning('User tried to add themselves as a friend.', ['user_id' => $user['id'], 'email' => $user['email']]);
-            echo json_encode(['error' => 'You cannot add yourself as a friend']);
-            exit;
-        }
-
-        $stmt = $pdo->prepare('SELECT * FROM friends WHERE user_id = ? AND friend_user_id = ?');
+        $stmt = $pdo->prepare('SELECT 1 FROM friends WHERE user_id = ? AND friend_user_id = ?');
         $stmt->execute([$user['id'], $friendId]);
         if ($stmt->fetch()) {
-            http_response_code(409);
-            $GLOBALS['logger']->warning('Friend relationship already exists.', ['user_id' => $user['id'], 'email' => $user['email'], 'friend_id' => $friendId]);
-            echo json_encode(['error' => 'Friend already exists']);
+            echo json_encode(['success' => true, 'friend_id' => $friendId, 'message' => 'Contact already exists']);
             exit;
         }
 
@@ -53,7 +55,7 @@ switch ($_SERVER['REQUEST_METHOD']) {
         $stmt->execute([$user['id'], $friendId]);
 
         $GLOBALS['logger']->info('Friend added successfully.', ['user_id' => $user['id'], 'email' => $user['email'], 'friend_id' => $friendId]);
-        echo json_encode(['success' => true]);
+        echo json_encode(['success' => true, 'friend_id' => $friendId]);
         break;
 
     case 'DELETE':

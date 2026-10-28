@@ -20,13 +20,13 @@ try {
     $pdo = db();
 
     $stmt = $pdo->prepare(
-        'SELECT p.id, p.filename, p.created_at, p.processed_manifest, p.processed_at, p.status,
+        "SELECT p.id, p.filename, p.created_at, p.processed_manifest, p.processed_at, p.status,
                 u.username, u.email AS user_email
          FROM prompts p
          JOIN users u ON p.user_id = u.id
-         WHERE p.id = ? AND p.friend_id = ? AND p.status = \'processed\''
+         WHERE p.id = ? AND (p.friend_id = ? OR p.user_id = ?) AND p.status IN ('ready', 'processed', 'pending')"
     );
-    $stmt->execute([$prompt_id, $user['id']]);
+    $stmt->execute([$prompt_id, $user['id'], $user['id']]);
     $prompt = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$prompt) {

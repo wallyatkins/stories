@@ -14,27 +14,28 @@ try {
 
     // Select responses to prompts created by the current user (received stories)
     $stmt_received = $pdo->prepare(
-        'SELECT r.filename, r.created_at, r.status, r.processed_manifest, r.processed_at,
+        "SELECT r.filename, r.created_at, r.status, r.processed_manifest, r.processed_at,
                 p.filename as prompt_filename, u.username, u.email AS user_email, u.avatar AS user_avatar
          FROM responses r
          JOIN prompts p ON r.prompt_id = p.id
          JOIN users u ON r.user_id = u.id
          WHERE p.user_id = ?
-           AND r.status = \'processed\'
-         ORDER BY r.created_at DESC'
+           AND r.status IN ('ready', 'processed', 'pending')
+         ORDER BY r.created_at DESC"
     );
     $stmt_received->execute([$user['id']]);
     $received_stories = $stmt_received->fetchAll(PDO::FETCH_ASSOC);
 
     // Select responses created by the current user (sent stories)
     $stmt_sent = $pdo->prepare(
-        'SELECT r.filename, r.created_at, r.status, r.processed_manifest, r.processed_at,
+        "SELECT r.filename, r.created_at, r.status, r.processed_manifest, r.processed_at,
                 p.filename as prompt_filename, u.username, u.email AS user_email, u.avatar AS user_avatar
          FROM responses r
          JOIN prompts p ON r.prompt_id = p.id
          JOIN users u ON p.user_id = u.id
          WHERE r.user_id = ?
-         ORDER BY r.created_at DESC'
+           AND r.status IN ('ready', 'processed', 'pending')
+         ORDER BY r.created_at DESC"
     );
     $stmt_sent->execute([$user['id']]);
     $sent_stories = $stmt_sent->fetchAll(PDO::FETCH_ASSOC);

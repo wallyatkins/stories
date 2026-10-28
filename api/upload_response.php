@@ -132,34 +132,82 @@ $promptFilename = $promptRow['filename'];
 
 // Save the response to the database
 $stmt = $pdo->prepare('INSERT INTO responses (prompt_id, user_id, filename, status) VALUES (?, ?, ?, ?) RETURNING id');
-$stmt->execute([$promptId, $user['id'], $filename, 'pending']);
+$stmt->execute([$promptId, $user['id'], $filename, 'ready']);
 $responseId = $stmt->fetchColumn();
 
-$GLOBALS['logger']->info('Response metadata updated in database.', [
+$GLOBALS['logger']->info('Response saved with ready status.', [
     'user_id' => $user['id'],
     'prompt_id' => $promptId,
-    'filename' => $filename
+    'filename' => $filename,
+    'response_id' => $responseId,
 ]);
+
+$host = $_SERVER['HTTP_HOST'] ?? 'stories.wallyatkins.com';
+$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'https://';
+$watchLink = $scheme . $host . '/api/oauth_login.php?return_to=' . rawurlencode('/watch/' . $filename);
+
+$isSelf = ((int)$promptRow['user_id'] === (int)$user['id']) || ($promptRow['owner_email'] === $user['email']);
+$responderName = $user['username'] ?? $user['email'];
+$ownerLabel = $promptRow['owner_username'] ?? $promptRow['owner_email'] ?? 'your friend';
+
+if ($isSelf) {
+    $subject = 'Your story response is ready';
+    $textBody = "Hi $responderName,\n\nYour story response has been recorded and is ready to watch! $watchLink\n\nThanks for capturing your memories,\nThe Stories Team";
+    $htmlBody = <<<HTML
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#222;">
+    <h2 style="color:#FF7F50;margin-top:0;">Your story is ready to watch!</h2>
+    <p>Hi {$responderName},</p>
+    <p>You recorded a response to your story prompt. You can watch it now:</p>
+    <p style="margin:28px 0;">
+        <a href="{$watchLink}" style="display:inline-block;padding:12px 28px;background:#FF7F50;color:#ffffff;text-decoration:none;border-radius:24px;font-weight:600;font-size:15px;box-shadow:0 2px 6px rgba(255,127,80,0.3);">Watch Your Story</a>
+    </p>
+    <p style="color:#666;font-size:14px;margin-top:32px;">Thanks for capturing your memories,<br><strong>The Stories Team</strong></p>
+</div>
+HTML;
+    send_email($config, $user['email'], $subject, $htmlBody, $textBody);
+} else {
+    // Notify prompt owner
+    if (!empty($promptRow['owner_email'])) {
+        $subject = "$responderName replied to your story prompt!";
+        $textBody = "Hi $ownerLabel,\n\n$responderName just replied to your story prompt with a new story video! Watch it here: $watchLink\n\nWe hope you enjoy it!\nThe Stories Team";
+        $htmlBody = <<<HTML
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#222;">
+    <h2 style="color:#FF7F50;margin-top:0;">You have a new story response!</h2>
+    <p>Hi {$ownerLabel},</p>
+    <p><strong>{$responderName}</strong> just replied to your story prompt with a new story video:</p>
+    <p style="margin:28px 0;">
+        <a href="{$watchLink}" style="display:inline-block;padding:12px 28px;background:#FF7F50;color:#ffffff;text-decoration:none;border-radius:24px;font-weight:600;font-size:15px;box-shadow:0 2px 6px rgba(255,127,80,0.3);">Watch Their Story</a>
+    </p>
+    <p style="color:#666;font-size:14px;margin-top:32px;">We hope you enjoy it!<br><strong>The Stories Team</strong></p>
+</div>
+HTML;
+        send_email($config, $promptRow['owner_email'], $subject, $htmlBody, $textBody);
+    }
+
+    // Notify responder confirmation
+    $subject = "Your story response was sent to $ownerLabel";
+    $textBody = "Hi $responderName,\n\nYour story response for $ownerLabel has been sent! We notified them via email with a link to watch: $watchLink\n\nThanks for sharing,\nThe Stories Team";
+    $htmlBody = <<<HTML
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#222;">
+    <h2 style="color:#FF7F50;margin-top:0;">Story response delivered!</h2>
+    <p>Hi {$responderName},</p>
+    <p>Your story response for <strong>{$ownerLabel}</strong> has been delivered. We notified them via email so they can watch your story.</p>
+    <p style="margin:28px 0;">
+        <a href="{$watchLink}" style="display:inline-block;padding:12px 28px;background:#FF7F50;color:#ffffff;text-decoration:none;border-radius:24px;font-weight:600;font-size:15px;box-shadow:0 2px 6px rgba(255,127,80,0.3);">Watch Your Story</a>
+    </p>
+    <p style="color:#666;font-size:14px;margin-top:32px;">Thanks for sharing,<br><strong>The Stories Team</strong></p>
+</div>
+HTML;
+    send_email($config, $user['email'], $subject, $htmlBody, $textBody);
+}
 
 if (push_is_enabled()) {
     push_send_notification((int)$promptRow['user_id'], [
         'title' => 'Your story prompt has a reply',
-        'body' => sprintf('%s sent a new story response.', $user['username'] ?? $user['email']),
+        'body' => sprintf('%s sent a new story response.', $responderName),
         'url' => sprintf('/watch/%s', $filename),
         'tag' => 'response-' . $responseId,
     ]);
 }
 
-// Notify responder that processing has begun
-$responderName = $user['username'] ?? $user['email'];
-$ownerLabel = $promptRow['owner_username'] ?? $promptRow['owner_email'] ?? 'your friend';
-$subject = 'We received your story response';
-$textBody = "Hi $responderName,\n\nWe received your story response for $ownerLabel. We'll process it shortly and email them once it's ready to watch.\n\nThanks for sharing,\nThe Stories Team";
-$htmlBody = <<<HTML
-<p>Hi {$responderName},</p>
-<p>We received your story response for <strong>{$ownerLabel}</strong>. We'll process it shortly and email them once it's ready to watch.</p>
-<p>Thanks for sharing,<br>The Stories Team</p>
-HTML;
-send_email($config, $user['email'], $subject, $htmlBody, $textBody);
-
-echo json_encode(['filename' => $filename, 'status' => 'pending']);
+echo json_encode(['id' => $responseId, 'filename' => $filename, 'status' => 'ready']);

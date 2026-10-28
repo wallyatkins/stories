@@ -102,8 +102,8 @@ export default function Stories() {
         {sentStories.length > 0 ? (
           <ul className="space-y-3.5">
             {sentStories.map((story) => {
-              const status = story.status || 'processed';
-              const isProcessed = status === 'processed';
+              const status = story.status || 'ready';
+              const isReady = status === 'processed' || status === 'ready';
               return (
                 <li
                   key={story.filename}
@@ -125,12 +125,12 @@ export default function Stories() {
                     </Link>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       Status:{' '}
-                      <span className={isProcessed ? 'font-medium text-coral' : 'text-gray-400'}>
-                        {isProcessed ? 'Ready to rewatch' : 'Processing'}
+                      <span className={isReady ? 'font-medium text-coral' : 'text-gray-400'}>
+                        {isReady ? 'Ready to rewatch' : 'Processing'}
                       </span>
                     </p>
                   </div>
-                  {isProcessed ? (
+                  {isReady ? (
                     <Link
                       to={`/watch/${story.filename}`}
                       className="bubble-content btn-secondary self-start md:self-auto"
