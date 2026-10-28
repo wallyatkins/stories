@@ -87,7 +87,7 @@ export default function RecordResponse() {
           <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-black/60 px-4 py-2 backdrop-blur-md border border-white/15 shadow-lg">
             <span className="h-2 w-2 rounded-full bg-teal animate-pulse" />
             <span className="text-xs font-medium text-white/80">Story response for:</span>
-            <span className="text-xs font-bold text-teal">{prompt.sender_username || 'Prompt'}</span>
+            <span className="text-xs font-bold text-teal">{prompt.username || prompt.user_email || prompt.sender_username || 'Prompt'}</span>
           </div>
           <button
             onClick={discard}
